@@ -2,6 +2,7 @@ package org.frice.th;
 
 import org.frice.Game;
 import org.frice.Initializer;
+import org.frice.anim.RotateAnim;
 import org.frice.anim.move.CustomMove;
 import org.frice.anim.move.SimpleMove;
 import org.frice.obj.sub.ImageObject;
@@ -30,6 +31,7 @@ public class Touhou extends Game {
 	private int speed = fastSpeed;
 	private ImageObject player = player();
 	private FTimer moveTimer = new FTimer(10);
+	private FTimer shootTimer = new FTimer(30);
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -58,6 +60,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
+		if (shootTimer.ended()) if (direction.get(4)) addObject(1, bullet());
 		if (moveTimer.ended()) {
 			if (direction.get(0) && player.getX() > 10) player.setX(player.getX() - speed);
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < 300)
@@ -65,16 +68,13 @@ public class Touhou extends Game {
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.setY(player.getY() - speed);
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
 				player.setY(player.getY() + speed);
-			if (direction.get(4)) {
-				addObject(1, bullet());
-			}
 		}
 	}
 
 	private ImageObject bullet() {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
-		// object.addAnim(new RotateAnim(10));
+		object.addAnim(new RotateAnim(3));
 		object.addAnim(new SimpleMove(0, -900));
 		return object;
 	}
