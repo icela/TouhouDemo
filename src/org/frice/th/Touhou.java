@@ -3,8 +3,8 @@ package org.frice.th;
 import org.frice.Game;
 import org.frice.Initializer;
 import org.frice.anim.RotateAnim;
+import org.frice.anim.move.AccurateMove;
 import org.frice.anim.move.CustomMove;
-import org.frice.anim.move.SimpleMove;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
 import org.frice.resource.graphics.ColorResource;
@@ -32,6 +32,7 @@ public class Touhou extends Game {
 	private ImageObject player = player();
 	private FTimer moveTimer = new FTimer(10);
 	private FTimer shootTimer = new FTimer(30);
+	private FTimer enemyTimer = new FTimer(1500);
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -61,6 +62,9 @@ public class Touhou extends Game {
 	@Override
 	public void onRefresh() {
 		if (shootTimer.ended()) if (direction.get(4)) addObject(1, bullet());
+		if (enemyTimer.ended()) {
+			addObject(1, enemy());
+		}
 		if (moveTimer.ended()) {
 			if (direction.get(0) && player.getX() > 10) player.setX(player.getX() - speed);
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < 300)
@@ -71,11 +75,28 @@ public class Touhou extends Game {
 		}
 	}
 
+	private ImageObject enemy() {
+		ImageResource bigImage = new FileImageResource("./res/th11/enemy/enemy.png");
+		final int size = 32;
+		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
+				.mapToObj(x -> bigImage.part(x * size, size * 8, size, size)).collect(Collectors.toList()), 50), Math.random() * 298 + 2, 0);
+		ret.addAnim(new AccurateMove(0, 100));
+		return ret;
+	}
+
+	@NotNull
+	private ImageObject player() {
+		ImageResource bigImage = new FileImageResource("./res/th11/player/pl01/pl01.png");
+		return new ImageObject(new FrameImageResource(IntStream.range(0, 8)
+				.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48)).collect(Collectors.toList()), 50), 0, 0);
+	}
+
 	private ImageObject bullet() {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
 		object.addAnim(new RotateAnim(3));
-		object.addAnim(new SimpleMove(0, -900));
+		object.addAnim(new AccurateMove(0, -900));
 		return object;
 	}
 
@@ -84,13 +105,6 @@ public class Touhou extends Game {
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		addObject(1, player);
-	}
-
-	@NotNull
-	private ImageObject player() {
-		ImageResource bigImage = new FileImageResource("./res/th11/player/pl01/pl01.png");
-		return new ImageObject(new FrameImageResource(IntStream.range(0, 8)
-				.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48)).collect(Collectors.toList()), 50), 0, 0);
 	}
 
 	private void background() {
