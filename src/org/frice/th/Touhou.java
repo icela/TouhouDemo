@@ -41,6 +41,7 @@ public class Touhou extends Game {
 	private static final int sceneWidth = 300;
 	private List<ImageObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
+	private AudioPlayer audioPlayer;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -49,6 +50,8 @@ public class Touhou extends Game {
 
 	@Override
 	public void onInit() {
+		audioPlayer = AudioManager.getPlayer("./res/bad-apple.mp3");
+		audioPlayer.start();
 		setSize(640, 480);
 		setAutoGC(true);
 		setShowFPS(false);
@@ -68,6 +71,13 @@ public class Touhou extends Game {
 	}
 
 	@Override
+	public void onExit() {
+		// audioPlayer.exit();
+		this.dispose();
+		System.exit(0);
+	}
+
+	@Override
 	public void onRefresh() {
 		if (shootTimer.ended()) if (direction.get(4)) {
 			ImageObject bullet = bullet();
@@ -83,9 +93,15 @@ public class Touhou extends Game {
 		}
 		enemies.forEach(e -> bullets.forEach(b -> {
 			if (e.collides(b)) e.setDied(true);
+			if (e.collides(player)) {
+				player.setDied(true);
+				dialogShow("满身疮痍", "你鸡寄了");
+				onExit();
+			}
 		}));
 		if (moveTimer.ended()) {
-			if (direction.get(0) && player.getX() > 10) player.setX(player.getX() - speed);
+			//noinspection PointlessArithmeticExpression
+			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) player.setX(player.getX() - speed);
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth)
 				player.setX(player.getX() + speed);
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.setY(player.getY() - speed);
@@ -150,8 +166,7 @@ public class Touhou extends Game {
 
 					@Override
 					public double getYDelta(double v) {
-						if (object.getY() > getHeight()) return v / backgroundSpeed - (object.getHeight() * backgroundPicCountY);
-						return v / backgroundSpeed;
+						return v / backgroundSpeed - (object.getY() > getHeight() ? object.getHeight() * backgroundPicCountY : 0);
 					}
 				});
 				addObject(0, object);
