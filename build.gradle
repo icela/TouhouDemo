@@ -2,33 +2,27 @@ group 'org.ice1000'
 version 'v1.0'
 
 buildscript {
-	ext.kotlin_version = '1.2.0'
-
 	repositories {
 		mavenCentral()
-	}
-	dependencies {
-		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 	}
 
 }
 
 apply plugin: 'java'
-apply plugin: 'kotlin'
 
 repositories {
 	mavenCentral()
 }
 
 sourceSets {
-	main.kotlin.srcDirs += 'src'
-	test.kotlin.srcDirs += 'test'
+	main.java.srcDirs += 'src'
+	test.java.srcDirs += 'test'
 	main.resources.srcDirs += 'res'
 }
 
 jar {
 	manifest {
-		attributes 'Main-Class': 'org.frice.th.MainKt'
+		attributes 'Main-Class': 'org.frice.th.Touhou'
 	}
 	from {
 		configurations
@@ -48,8 +42,7 @@ allprojects {
 }
 
 dependencies {
-	artifact "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-	artifact "com.github.icela:FriceEngine:v1.6.7-2"
+	artifact "com.github.icela:FriceEngine:v1.6.7-3"
 
 	configurations.compile.extendsFrom(configurations.artifact)
 
