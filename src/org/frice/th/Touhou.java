@@ -56,7 +56,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onInit() {
-		AudioPlayer audioPlayer = AudioManager.getPlayer("./res/green-eye.mp3");
+		AudioPlayer audioPlayer = AudioManager.getPlayer("./res/bgm.mp3");
 		audioPlayer.start();
 		setSize(640, 480);
 		setAutoGC(true);
