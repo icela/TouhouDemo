@@ -1,7 +1,6 @@
 package org.frice.th;
 
 import org.frice.Game;
-import org.frice.Initializer;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.AccurateMove;
 import org.frice.anim.move.CustomMove;
@@ -15,33 +14,40 @@ import org.frice.utils.BoolArray;
 import org.frice.utils.audio.AudioManager;
 import org.frice.utils.audio.AudioPlayer;
 import org.frice.utils.message.FLog;
+import org.frice.utils.shape.FQuad;
 import org.frice.utils.shape.FRectangle;
 import org.frice.utils.time.FTimer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.frice.Initializer.launch;
+
 public class Touhou extends Game {
 	private int backgroundSpeed = 2;
 	private static final int backgroundPicCountX = 3;
 	private static final int backgroundPicCountY = 3;
-	private static final int fastSpeed = 5;
-	private BoolArray direction = new BoolArray(5);
+	private static final int fastSpeed = 8;
+	private BoolArray direction = new BoolArray(6);
 	private int speed = fastSpeed;
-	private ImageObject player = player();
-	private FTimer moveTimer = new FTimer(10);
+	private FQuad playerBox;
+	private ImageObject player;
+	private FTimer moveTimer = new FTimer(12);
 	private FTimer shootTimer = new FTimer(30);
 	private FTimer enemyTimer = new FTimer(700);
 	private static final int sceneWidth = 300;
 	private List<ImageObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
-	private AudioPlayer audioPlayer;
+	private List<ImageObject> backgroundImages;
+	private ImageResource darkBackground;
+	private ImageResource shineBackground;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -50,23 +56,25 @@ public class Touhou extends Game {
 
 	@Override
 	public void onInit() {
-		audioPlayer = AudioManager.getPlayer("./res/bad-apple.mp3");
+		AudioPlayer audioPlayer = AudioManager.getPlayer("./res/green-eye.mp3");
 		audioPlayer.start();
 		setSize(640, 480);
 		setAutoGC(true);
-		setShowFPS(false);
-		setMillisToRefresh(10);
+		setShowFPS(true);
+		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
-		Consumer<KeyEvent> a = e -> {
+		Consumer<KeyEvent> a = (KeyEvent e) -> {
 			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, true);
-			speed = e.isShiftDown() ? 1 : 3;
+			speed = e.isShiftDown() ? 1 : fastSpeed;
 			if (e.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
+			if (e.getKeyCode() == KeyEvent.VK_X) backgroundImages.forEach(o -> o.setRes(shineBackground));
 		};
 		addKeyListener(a, a, e -> {
 			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, false);
 			if (e.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
+			if (e.getKeyCode() == KeyEvent.VK_X) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
 	}
 
@@ -91,23 +99,35 @@ public class Touhou extends Game {
 			enemies.removeIf(ImageObject::getDied);
 			bullets.removeIf(ImageObject::getDied);
 		}
-		enemies.forEach(e -> bullets.forEach(b -> {
-			if (e.collides(b)) e.setDied(true);
+		if (moveTimer.ended()) {
+			//noinspection PointlessArithmeticExpression
+			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) {
+				player.setX(player.getX() - speed);
+				playerBox.setX(playerBox.getX() - speed);
+			}
+			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth) {
+				player.setX(player.getX() + speed);
+				playerBox.setX(playerBox.getX() + speed);
+			}
+			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) {
+				player.setY(player.getY() - speed);
+				playerBox.setY(playerBox.getY() - speed);
+			}
+			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10) {
+				player.setY(player.getY() + speed);
+				playerBox.setY(playerBox.getY() + speed);
+			}
+		}
+		enemies.forEach(e -> {
+			bullets.forEach(b -> {
+				if (e.collides(b)) e.setDied(true);
+			});
 			if (e.collides(player)) {
 				player.setDied(true);
 				dialogShow("满身疮痍", "你鸡寄了");
 				onExit();
 			}
-		}));
-		if (moveTimer.ended()) {
-			//noinspection PointlessArithmeticExpression
-			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) player.setX(player.getX() - speed);
-			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth)
-				player.setX(player.getX() + speed);
-			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.setY(player.getY() - speed);
-			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
-				player.setY(player.getY() + speed);
-		}
+		});
 	}
 
 	@NotNull
@@ -147,21 +167,23 @@ public class Touhou extends Game {
 	public void onLastInit() {
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
+		player = player();
+		playerBox = new FQuad(player.getX() + 12, player.getY() + 18, 8, 12);
+		player.setCollisionBox(playerBox);
 		addObject(1, player);
 	}
 
 	private void background() {
-		ImageResource image = new FileImageResource("./res/th11/background/stage04/stage04c.png");
+		backgroundImages = new ArrayList<>(backgroundPicCountX * backgroundPicCountY);
+		darkBackground = new FileImageResource("./res/th11/background/stage04/stage04c.png");
+		shineBackground = new FileImageResource("./res/th11/background/stage04/stage04b.png");
 		for (int x = 0; x < backgroundPicCountX; x++)
 			for (int y = 0; y < backgroundPicCountY; y++) {
-				ImageObject object = new ImageObject(image, x * image.getImage().getWidth(), y * image.getImage().getHeight());
+				ImageObject object = new ImageObject(darkBackground, x * darkBackground.getImage().getWidth(), y * darkBackground.getImage().getHeight());
 				object.addAnim(new CustomMove() {
 					@Override
 					public double getXDelta(double v) {
-						if (object.getX() < -object.getWidth())
-							return -v / (backgroundSpeed << 2) + (object.getWidth() * backgroundPicCountX);
-						return -v / (backgroundSpeed << 2);
-//						return 0;
+						return -v / (backgroundSpeed << 2) + (object.getX() < -object.getWidth() ? (object.getWidth() * backgroundPicCountX) : 0);
 					}
 
 					@Override
@@ -170,10 +192,11 @@ public class Touhou extends Game {
 					}
 				});
 				addObject(0, object);
+				backgroundImages.add(object);
 			}
 	}
 
 	public static void main(String[] args) {
-		Initializer.launch(Touhou.class);
+		launch(Touhou.class);
 	}
 }
