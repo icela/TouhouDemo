@@ -1,17 +1,12 @@
 group 'org.ice1000'
 version 'v1.0'
-
-buildscript {
-	repositories {
-		mavenCentral()
-	}
-
-}
-
 apply plugin: 'java'
+
+buildscript { repositories { mavenCentral() } }
 
 repositories {
 	mavenCentral()
+	flatDir { dirs '../FriceEngine/build/libs' }
 }
 
 sourceSets {
@@ -21,28 +16,17 @@ sourceSets {
 }
 
 jar {
-	manifest {
-		attributes 'Main-Class': 'org.frice.th.Touhou'
-	}
-	from {
-		configurations
-				.artifact
-				.collect { it.isDirectory() ? it : zipTree(it) }
-	}
+	manifest { attributes 'Main-Class': 'org.frice.th.Touhou' }
+	from { configurations.artifact.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
-configurations {
-	artifact
-}
+configurations { artifact }
 
-allprojects {
-	repositories {
-		maven { url 'https://jitpack.io' }
-	}
-}
+allprojects { repositories { maven { url 'https://jitpack.io' } } }
 
 dependencies {
-	artifact "com.github.icela:FriceEngine:v1.6.7-4"
+	// artifact "com.github.icela:FriceEngine:v1.6.7-4"
+	artifact name: 'engine-all-1.7.0'
 
 	configurations.compile.extendsFrom(configurations.artifact)
 

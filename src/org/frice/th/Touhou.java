@@ -12,12 +12,17 @@ import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.utils.BoolArray;
+import org.frice.utils.audio.AudioManager;
+import org.frice.utils.audio.AudioPlayer;
 import org.frice.utils.message.FLog;
 import org.frice.utils.shape.FRectangle;
 import org.frice.utils.time.FTimer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -32,7 +37,10 @@ public class Touhou extends Game {
 	private ImageObject player = player();
 	private FTimer moveTimer = new FTimer(10);
 	private FTimer shootTimer = new FTimer(30);
-	private FTimer enemyTimer = new FTimer(1500);
+	private FTimer enemyTimer = new FTimer(700);
+	private static final int sceneWidth = 300;
+	private List<ImageObject> enemies = new LinkedList<>();
+	private List<ImageObject> bullets = new LinkedList<>();
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -45,7 +53,7 @@ public class Touhou extends Game {
 		setAutoGC(true);
 		setShowFPS(false);
 		setMillisToRefresh(10);
-		FLog.INSTANCE.setLevel(FLog.ERROR);
+		FLog.setLevel(FLog.ERROR);
 		Consumer<KeyEvent> a = e -> {
 			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, true);
@@ -61,13 +69,24 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
-		if (shootTimer.ended()) if (direction.get(4)) addObject(1, bullet());
-		if (enemyTimer.ended()) {
-			addObject(1, enemy());
+		if (shootTimer.ended()) if (direction.get(4)) {
+			ImageObject bullet = bullet();
+			bullets.add(bullet);
+			addObject(1, bullet);
 		}
+		if (enemyTimer.ended()) {
+			ImageObject enemy = enemy();
+			enemies.add(enemy);
+			addObject(1, enemy);
+			enemies.removeIf(ImageObject::getDied);
+			bullets.removeIf(ImageObject::getDied);
+		}
+		enemies.forEach(e -> bullets.forEach(b -> {
+			if (e.collides(b)) e.setDied(true);
+		}));
 		if (moveTimer.ended()) {
 			if (direction.get(0) && player.getX() > 10) player.setX(player.getX() - speed);
-			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < 300)
+			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth)
 				player.setX(player.getX() + speed);
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.setY(player.getY() - speed);
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
@@ -75,23 +94,31 @@ public class Touhou extends Game {
 		}
 	}
 
+	@NotNull
+	@Contract(pure = true)
 	private ImageObject enemy() {
-		ImageResource bigImage = new FileImageResource("./res/th11/enemy/enemy.png");
+		ImageResource bigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		final int size = 32;
+		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
-				.mapToObj(x -> bigImage.part(x * size, size * 8, size, size)).collect(Collectors.toList()), 50), Math.random() * 298 + 2, 0);
+				.mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size))
+				.collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0);
 		ret.addAnim(new AccurateMove(0, 100));
 		return ret;
 	}
 
 	@NotNull
+	@Contract(pure = true)
 	private ImageObject player() {
-		ImageResource bigImage = new FileImageResource("./res/th11/player/pl01/pl01.png");
+		ImageResource bigImage = ImageResource.fromPath("./res/th11/player/pl01/pl01.png");
 		return new ImageObject(new FrameImageResource(IntStream.range(0, 8)
-				.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48)).collect(Collectors.toList()), 50), 0, 0);
+				.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48))
+				.collect(Collectors.toList()), 50), (sceneWidth >>> 1) - 1, getHeight() - 50);
 	}
 
+	@NotNull
+	@Contract(pure = true)
 	private ImageObject bullet() {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
