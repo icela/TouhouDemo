@@ -6,7 +6,7 @@ buildscript { repositories { mavenCentral() } }
 
 repositories {
 	mavenCentral()
-	flatDir { dirs '../FriceEngine/build/libs' }
+	// flatDir { dirs '../FriceEngine/build/libs' }
 }
 
 sourceSets {
@@ -25,8 +25,8 @@ configurations { artifact }
 allprojects { repositories { maven { url 'https://jitpack.io' } } }
 
 dependencies {
-	// artifact "com.github.icela:FriceEngine:v1.6.7-4"
-	artifact name: 'engine-all-1.7.0'
+	artifact 'com.github.icela:FriceEngine:v1.7.0'
+	artifact group: 'org.jetbrains', name: 'annotations', version: '15.0'
 
 	configurations.compile.extendsFrom(configurations.artifact)
 
