@@ -42,7 +42,7 @@ allprojects {
 }
 
 dependencies {
-	artifact "com.github.icela:FriceEngine:v1.6.7-3"
+	artifact "com.github.icela:FriceEngine:v1.6.7-4"
 
 	configurations.compile.extendsFrom(configurations.artifact)
 
