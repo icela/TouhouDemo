@@ -45,9 +45,11 @@ public class Touhou extends Game {
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer shootTimer = new FTimer(30);
 	private FTimer enemyTimer = new FTimer(600);
+	private FTimer enemyShootTimer = new FTimer(600);
 	private static final int sceneWidth = 300;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
+	private List<ImageObject> enemyBullets = new LinkedList<>();
 	private List<ImageObject> backgroundImages;
 	private ImageResource darkBackground;
 	private ImageResource shineBackground;
@@ -69,6 +71,7 @@ public class Touhou extends Game {
 		addKeyListener(new KeyListener() {
 			@Override
 			public void keyPressed(KeyEvent event) {
+				speed = event.isShiftDown() ? 1 : fastSpeed;
 				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
 					direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
 				if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
@@ -78,10 +81,9 @@ public class Touhou extends Game {
 
 			@Override
 			public void keyReleased(KeyEvent event) {
-				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN) {
-					speed = event.isShiftDown() ? 1 : fastSpeed;
+				speed = event.isShiftDown() ? 1 : fastSpeed;
+				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
 					direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, false);
-				}
 				if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
 				if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 			}
@@ -101,16 +103,15 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
+		enemies.removeIf(ImageObject::getDied);
+		bullets.removeIf(ImageObject::getDied);
 		if (shootTimer.ended()) if (direction.get(4)) {
 			ImageObject bullet = bullet();
 			bullets.add(bullet);
 			addObject(1, bullet);
 		}
-		if (enemyTimer.ended()) {
-			BloodedObject enemy = enemy((int) (Math.log(FClock.INSTANCE.getCurrent()) * 100));
-			enemies.add(enemy);
-			addObject(1, enemy);
-		}
+		if (enemyTimer.ended()) addObject(1, enemy((int) (Math.log(FClock.INSTANCE.getCurrent()) * 100)));
+		if (enemyShootTimer.ended()) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
 			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) playerEntity.move(-speed, 0);
@@ -120,8 +121,6 @@ public class Touhou extends Game {
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
 				playerEntity.move(0, speed);
 		}
-		enemies.removeIf(ImageObject::getDied);
-		bullets.removeIf(ImageObject::getDied);
 		enemies.forEach(e -> {
 			bullets.forEach(b -> {
 				if (e.collides(b)) {
@@ -133,7 +132,10 @@ public class Touhou extends Game {
 					}
 				}
 			});
-			if (e.collides(player)) {
+			if (e.collides(player)) e.setDied(true);
+		});
+		enemyBullets.forEach(b -> {
+			if (b.collides(player)) {
 				player.setDied(true);
 				dialogShow("满身疮痍", "你鸡寄了");
 				onExit();
@@ -141,14 +143,28 @@ public class Touhou extends Game {
 		});
 	}
 
-	@Contract(pure = true)
+	@NotNull
+	private ImageObject enemyBullet(BloodedObject e) {
+		ImageResource bigImage = ImageResource.fromPath("./res/th11/enemy/enemy2.png");
+		int rand = (int) (Math.random() * 4) * 32;
+		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50), e.getX() + (e.getWidth() - 32) / 2, e.getY() + (e.getHeight() - 32) / 2);
+		ret.addAnim(new ChasingMove(ret, player, 60));
+		ret.addAnim(new AccurateMove(0, 500));
+		ret.addAnim(new AccelerateMove(0, -1));
+		enemyBullets.add(ret);
+		return ret;
+	}
+
+	@NotNull
 	private BloodedObject enemy(int blood) {
 		ImageResource bigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		final int size = 32;
 		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
-		ret.addAnim(new ApproachingMove(ret, player, 0.5));
+		ret.addAnim(new ApproachingMove(ret, player, 0.8));
+		ret.addAnim(new AccurateMove(0, 200));
+		enemies.add(ret);
 		return ret;
 	}
 
