@@ -11,11 +11,13 @@ import org.frice.resource.graphics.ColorResource;
 import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
+import org.frice.th.obj.BloodedObject;
 import org.frice.utils.BoolArray;
 import org.frice.utils.audio.AudioManager;
 import org.frice.utils.audio.AudioPlayer;
 import org.frice.utils.message.FLog;
 import org.frice.utils.shape.FRectangle;
+import org.frice.utils.time.FClock;
 import org.frice.utils.time.FTimer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +46,7 @@ public class Touhou extends Game {
 	private FTimer shootTimer = new FTimer(30);
 	private FTimer enemyTimer = new FTimer(700);
 	private static final int sceneWidth = 300;
-	private List<ImageObject> enemies = new LinkedList<>();
+	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
 	private List<ImageObject> backgroundImages;
 	private ImageResource darkBackground;
@@ -94,11 +96,9 @@ public class Touhou extends Game {
 			addObject(1, bullet);
 		}
 		if (enemyTimer.ended()) {
-			ImageObject enemy = enemy();
+			BloodedObject enemy = enemy((int) (Math.log(FClock.INSTANCE.getCurrent()) * 100));
 			enemies.add(enemy);
 			addObject(1, enemy);
-			enemies.removeIf(ImageObject::getDied);
-			bullets.removeIf(ImageObject::getDied);
 		}
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
@@ -109,9 +109,15 @@ public class Touhou extends Game {
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
 				playerEntity.move(0, speed);
 		}
+		enemies.removeIf(ImageObject::getDied);
+		bullets.removeIf(ImageObject::getDied);
 		enemies.forEach(e -> {
 			bullets.forEach(b -> {
-				if (e.collides(b)) e.setDied(true);
+				if (e.collides(b)) {
+					b.setDied(true);
+					e.blood -= 80;
+					if (e.blood <= 0) e.setDied(true);
+				}
 			});
 			if (e.collides(player)) {
 				player.setDied(true);
@@ -121,14 +127,13 @@ public class Touhou extends Game {
 		});
 	}
 
-	@NotNull
 	@Contract(pure = true)
-	private ImageObject enemy() {
+	private BloodedObject enemy(int blood) {
 		ImageResource bigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		final int size = 32;
 		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0);
+		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
 		ret.addAnim(new AccurateMove(0, 100));
 		return ret;
 	}
