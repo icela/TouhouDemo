@@ -2,9 +2,7 @@ package org.frice.th;
 
 import org.frice.Game;
 import org.frice.anim.RotateAnim;
-import org.frice.anim.move.AccurateMove;
-import org.frice.anim.move.CustomMove;
-import org.frice.anim.move.DirectedMove;
+import org.frice.anim.move.*;
 import org.frice.obj.AttachedObjects;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -46,7 +44,7 @@ public class Touhou extends Game {
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer shootTimer = new FTimer(30);
-	private FTimer enemyTimer = new FTimer(400);
+	private FTimer enemyTimer = new FTimer(600);
 	private static final int sceneWidth = 300;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
@@ -150,7 +148,7 @@ public class Touhou extends Game {
 		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
-		ret.addAnim(new AccurateMove(0, 100));
+		ret.addAnim(new ApproachingMove(ret, player, 0.5));
 		return ret;
 	}
 
