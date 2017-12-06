@@ -4,6 +4,7 @@ import org.frice.Game;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.AccurateMove;
 import org.frice.anim.move.CustomMove;
+import org.frice.anim.move.DirectedMove;
 import org.frice.obj.AttachedObjects;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -40,6 +41,7 @@ public class Touhou extends Game {
 	private static final int fastSpeed = 8;
 	private BoolArray direction = new BoolArray(6);
 	private int speed = fastSpeed;
+	private int score = 0;
 	private AttachedObjects playerEntity;
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
@@ -69,15 +71,16 @@ public class Touhou extends Game {
 		Consumer<KeyEvent> a = (KeyEvent e) -> {
 			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, true);
-			speed = e.isShiftDown() ? 1 : fastSpeed;
 			if (e.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
 			if (e.getKeyCode() == KeyEvent.VK_X) backgroundImages.forEach(o -> o.setRes(shineBackground));
+			if (e.getKeyCode() == KeyEvent.VK_SHIFT) speed = 1;
 		};
 		addKeyListener(a, a, e -> {
 			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, false);
 			if (e.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
 			if (e.getKeyCode() == KeyEvent.VK_X) backgroundImages.forEach(o -> o.setRes(darkBackground));
+			if (e.getKeyCode() == KeyEvent.VK_SHIFT) speed = fastSpeed;
 		});
 	}
 
@@ -116,7 +119,10 @@ public class Touhou extends Game {
 				if (e.collides(b)) {
 					b.setDied(true);
 					e.blood -= 80;
-					if (e.blood <= 0) e.setDied(true);
+					if (e.blood <= 0) {
+						e.setDied(true);
+						score += 1;
+					}
 				}
 			});
 			if (e.collides(player)) {
@@ -151,7 +157,10 @@ public class Touhou extends Game {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
 		object.addAnim(new RotateAnim(3));
-		object.addAnim(new AccurateMove(0, -900));
+		if (enemies.size() > 0) {
+			ImageObject enemy = enemies.get((int) (Math.random() * enemies.size()));
+			object.addAnim(new DirectedMove(object, enemy.getX(), enemy.getY(), 1000));
+		} else object.addAnim(new AccurateMove(0, -1000));
 		return object;
 	}
 
