@@ -24,11 +24,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -39,14 +39,14 @@ public class Touhou extends Game {
 	private static final int backgroundPicCountX = 3;
 	private static final int backgroundPicCountY = 3;
 	private static final int fastSpeed = 8;
-	private BoolArray direction = new BoolArray(6);
+	private volatile BoolArray direction = new BoolArray(6);
 	private int speed = fastSpeed;
 	private int score = 0;
 	private AttachedObjects playerEntity;
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer shootTimer = new FTimer(30);
-	private FTimer enemyTimer = new FTimer(700);
+	private FTimer enemyTimer = new FTimer(400);
 	private static final int sceneWidth = 300;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
@@ -68,19 +68,29 @@ public class Touhou extends Game {
 		setShowFPS(true);
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
-		Consumer<KeyEvent> a = (KeyEvent e) -> {
-			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
-				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, true);
-			if (e.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
-			if (e.getKeyCode() == KeyEvent.VK_X) backgroundImages.forEach(o -> o.setRes(shineBackground));
-			if (e.getKeyCode() == KeyEvent.VK_SHIFT) speed = 1;
-		};
-		addKeyListener(a, a, e -> {
-			if (e.getKeyCode() >= KeyEvent.VK_LEFT && e.getKeyCode() <= KeyEvent.VK_DOWN)
-				direction.set(e.getKeyCode() - KeyEvent.VK_LEFT, false);
-			if (e.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
-			if (e.getKeyCode() == KeyEvent.VK_X) backgroundImages.forEach(o -> o.setRes(darkBackground));
-			if (e.getKeyCode() == KeyEvent.VK_SHIFT) speed = fastSpeed;
+		addKeyListener(new KeyListener() {
+			@Override
+			public void keyPressed(KeyEvent event) {
+				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
+					direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
+				if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
+				if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o1 -> o1.setRes(shineBackground));
+				System.out.println(event.getKeyCode());
+			}
+
+			@Override
+			public void keyReleased(KeyEvent event) {
+				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN) {
+					speed = event.isShiftDown() ? 1 : fastSpeed;
+					direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, false);
+				}
+				if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
+				if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
+			}
+
+			@Override
+			public void keyTyped(KeyEvent keyEvent) {
+			}
 		});
 	}
 
@@ -158,7 +168,7 @@ public class Touhou extends Game {
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
 		object.addAnim(new RotateAnim(3));
 		if (enemies.size() > 0) {
-			ImageObject enemy = enemies.get((int) (Math.random() * enemies.size()));
+			ImageObject enemy = enemies.stream().reduce((e1, e2) -> Math.abs(e1.getX() - player.getX()) + Math.abs(e1.getY() - player.getY()) < Math.abs(e2.getX() - player.getX()) * Math.abs(e2.getY() - player.getY()) ? e1 : e2).get();
 			object.addAnim(new DirectedMove(object, enemy.getX(), enemy.getY(), 1000));
 		} else object.addAnim(new AccurateMove(0, -1000));
 		return object;
@@ -169,7 +179,7 @@ public class Touhou extends Game {
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		player = player();
-		ShapeObject playerBox = new ShapeObject(ColorResource.DARK_GRAY, new FRectangle(8, 12), player.getX() + 12, player.getY() + 18);
+		ShapeObject playerBox = new ShapeObject(ColorResource.DARK_GRAY, new FRectangle(2, 2), player.getX() + 15, player.getY() + 23);
 		player.setCollisionBox(playerBox);
 		playerEntity = new AttachedObjects(Arrays.asList(player, playerBox));
 		addObject(1, player);
