@@ -4,6 +4,7 @@ import org.frice.Game;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.AccurateMove;
 import org.frice.anim.move.CustomMove;
+import org.frice.obj.AttachedObjects;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
 import org.frice.resource.graphics.ColorResource;
@@ -14,7 +15,6 @@ import org.frice.utils.BoolArray;
 import org.frice.utils.audio.AudioManager;
 import org.frice.utils.audio.AudioPlayer;
 import org.frice.utils.message.FLog;
-import org.frice.utils.shape.FQuad;
 import org.frice.utils.shape.FRectangle;
 import org.frice.utils.time.FTimer;
 import org.jetbrains.annotations.Contract;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -37,7 +38,7 @@ public class Touhou extends Game {
 	private static final int fastSpeed = 8;
 	private BoolArray direction = new BoolArray(6);
 	private int speed = fastSpeed;
-	private FQuad playerBox;
+	private AttachedObjects playerEntity;
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer shootTimer = new FTimer(30);
@@ -101,22 +102,12 @@ public class Touhou extends Game {
 		}
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
-			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) {
-				player.setX(player.getX() - speed);
-				playerBox.setX(playerBox.getX() - speed);
-			}
-			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth) {
-				player.setX(player.getX() + speed);
-				playerBox.setX(playerBox.getX() + speed);
-			}
-			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) {
-				player.setY(player.getY() - speed);
-				playerBox.setY(playerBox.getY() - speed);
-			}
-			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10) {
-				player.setY(player.getY() + speed);
-				playerBox.setY(playerBox.getY() + speed);
-			}
+			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) playerEntity.move(-speed, 0);
+			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth)
+				playerEntity.move(speed, 0);
+			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) playerEntity.move(0, -speed);
+			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
+				playerEntity.move(0, speed);
 		}
 		enemies.forEach(e -> {
 			bullets.forEach(b -> {
@@ -137,9 +128,7 @@ public class Touhou extends Game {
 		final int size = 32;
 		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
-				.mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size))
-				.collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0);
+		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0);
 		ret.addAnim(new AccurateMove(0, 100));
 		return ret;
 	}
@@ -148,9 +137,7 @@ public class Touhou extends Game {
 	@Contract(pure = true)
 	private ImageObject player() {
 		ImageResource bigImage = ImageResource.fromPath("./res/th11/player/pl01/pl01.png");
-		return new ImageObject(new FrameImageResource(IntStream.range(0, 8)
-				.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48))
-				.collect(Collectors.toList()), 50), (sceneWidth >>> 1) - 1, getHeight() - 50);
+		return new ImageObject(new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, 0, 32, 48)).collect(Collectors.toList()), 50), (sceneWidth >>> 1) - 1, getHeight() - 50);
 	}
 
 	@NotNull
@@ -168,8 +155,9 @@ public class Touhou extends Game {
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		player = player();
-		playerBox = new FQuad(player.getX() + 12, player.getY() + 18, 8, 12);
+		ShapeObject playerBox = new ShapeObject(ColorResource.DARK_GRAY, new FRectangle(8, 12), player.getX() + 12, player.getY() + 18);
 		player.setCollisionBox(playerBox);
+		playerEntity = new AttachedObjects(Arrays.asList(player, playerBox));
 		addObject(1, player);
 	}
 
