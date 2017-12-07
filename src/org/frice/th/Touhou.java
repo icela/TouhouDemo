@@ -3,6 +3,7 @@ package org.frice.th;
 import org.frice.Game;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.*;
+import org.frice.event.DelayedEvent;
 import org.frice.obj.AttachedObjects;
 import org.frice.obj.FObject;
 import org.frice.obj.button.SimpleText;
@@ -14,6 +15,7 @@ import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.th.obj.BloodedObject;
 import org.frice.utils.BoolArray;
+import org.frice.utils.EventManager;
 import org.frice.utils.audio.AudioManager;
 import org.frice.utils.audio.AudioPlayer;
 import org.frice.utils.message.FLog;
@@ -58,6 +60,7 @@ public class Touhou extends Game {
 	private ImageResource shineBackground;
 	private SimpleText scoreText;
 	private SimpleText lifeText;
+	private EventManager eventManager = new EventManager();
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -95,13 +98,14 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
+		eventManager.check();
 		if (shootTimer.ended()) if (direction.get(4)) {
 			ImageObject bullet = bullet();
 			bullets.add(bullet);
 			addObject(1, bullet);
 		}
 		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
-			addObject(1, enemy((int) (Math.log(FClock.INSTANCE.getCurrent()) * 100)));
+			addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.3) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
@@ -144,8 +148,13 @@ public class Touhou extends Game {
 				return true;
 			});
 			if (life < 0) {
-				dialogShow("满身疮痍", "你鸡寄了");
-				onExit();
+				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
+				gameOver.setTextSize(100);
+				addObject(2, gameOver);
+				eventManager.insert(DelayedEvent.millisFromNow(1000, () -> {
+					dialogShow("满身疮痍", "你鸡寄了");
+					onExit();
+				}));
 			}
 		}
 	}
