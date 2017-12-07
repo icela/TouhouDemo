@@ -4,6 +4,7 @@ import org.frice.Game;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.*;
 import org.frice.obj.AttachedObjects;
+import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
 import org.frice.resource.graphics.ColorResource;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -37,7 +37,7 @@ public class Touhou extends Game {
 	private static final int backgroundPicCountX = 3;
 	private static final int backgroundPicCountY = 3;
 	private static final int fastSpeed = 8;
-	private volatile BoolArray direction = new BoolArray(6);
+	private BoolArray direction = new BoolArray(6);
 	private int speed = fastSpeed;
 	private int score = 0;
 	private AttachedObjects playerEntity;
@@ -45,7 +45,7 @@ public class Touhou extends Game {
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer shootTimer = new FTimer(30);
 	private FTimer enemyTimer = new FTimer(600);
-	private FTimer enemyShootTimer = new FTimer(600);
+	private FTimer enemyShootTimer = new FTimer(1200);
 	private static final int sceneWidth = 300;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
@@ -53,6 +53,7 @@ public class Touhou extends Game {
 	private List<ImageObject> backgroundImages;
 	private ImageResource darkBackground;
 	private ImageResource shineBackground;
+	private SimpleText scoreText;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -68,36 +69,23 @@ public class Touhou extends Game {
 		setShowFPS(true);
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
-		addKeyListener(new KeyListener() {
-			@Override
-			public void keyPressed(KeyEvent event) {
-				speed = event.isShiftDown() ? 1 : fastSpeed;
-				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
-					direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
-				if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
-				if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o1 -> o1.setRes(shineBackground));
-				System.out.println(event.getKeyCode());
-			}
-
-			@Override
-			public void keyReleased(KeyEvent event) {
-				speed = event.isShiftDown() ? 1 : fastSpeed;
-				if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
-					direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, false);
-				if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
-				if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
-			}
-
-			@Override
-			public void keyTyped(KeyEvent keyEvent) {
-			}
+		addKeyListener(null, event -> {
+			speed = event.isShiftDown() ? 1 : fastSpeed;
+			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
+				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
+			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
+			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o1 -> o1.setRes(shineBackground));
+		}, event -> {
+			speed = event.isShiftDown() ? 1 : fastSpeed;
+			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
+				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, false);
+			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
+			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
 	}
 
 	@Override
 	public void onExit() {
-		// audioPlayer.exit();
-		this.dispose();
 		System.exit(0);
 	}
 
@@ -115,12 +103,13 @@ public class Touhou extends Game {
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
 			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) playerEntity.move(-speed, 0);
-			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() < sceneWidth)
+			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() - player.getWidth() < sceneWidth)
 				playerEntity.move(speed, 0);
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) playerEntity.move(0, -speed);
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
 				playerEntity.move(0, speed);
 		}
+		scoreText.setText("Score: " + score);
 		enemies.forEach(e -> {
 			bullets.forEach(b -> {
 				if (e.collides(b)) {
@@ -150,7 +139,7 @@ public class Touhou extends Game {
 		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50), e.getX() + (e.getWidth() - 32) / 2, e.getY() + (e.getHeight() - 32) / 2);
 		ret.addAnim(new ChasingMove(ret, player, 60));
 		ret.addAnim(new AccurateMove(0, 500));
-		ret.addAnim(new AccelerateMove(0, -1));
+		ret.addAnim(new DirectedMove(ret, player.getX(), player.getY(), 300));
 		enemyBullets.add(ret);
 		return ret;
 	}
@@ -162,7 +151,7 @@ public class Touhou extends Game {
 		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> bigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
-		ret.addAnim(new ApproachingMove(ret, player, 0.8));
+		ret.addAnim(new ApproachingMove(ret, player, 0.3));
 		ret.addAnim(new AccurateMove(0, 200));
 		enemies.add(ret);
 		return ret;
@@ -181,10 +170,11 @@ public class Touhou extends Game {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
 		object.addAnim(new RotateAnim(3));
-		if (enemies.size() > 0) {
-			ImageObject enemy = enemies.stream().reduce((e1, e2) -> Math.abs(e1.getX() - player.getX()) + Math.abs(e1.getY() - player.getY()) < Math.abs(e2.getX() - player.getX()) * Math.abs(e2.getY() - player.getY()) ? e1 : e2).get();
-			object.addAnim(new DirectedMove(object, enemy.getX(), enemy.getY(), 1000));
-		} else object.addAnim(new AccurateMove(0, -1000));
+//		if (enemies.size() > 0) {
+//			ImageObject enemy = enemies.stream().reduce((e1, e2) -> Math.abs(e1.getX() - player.getX()) + Math.abs(e1.getY() - player.getY()) < Math.abs(e2.getX() - player.getX()) * Math.abs(e2.getY() - player.getY()) ? e1 : e2).get();
+//			object.addAnim(new DirectedMove(object, enemy.getX(), enemy.getY(), 1000));
+//		} else
+		object.addAnim(new AccurateMove(0, -1000));
 		return object;
 	}
 
@@ -197,6 +187,10 @@ public class Touhou extends Game {
 		player.setCollisionBox(playerBox);
 		playerEntity = new AttachedObjects(Arrays.asList(player, playerBox));
 		addObject(1, player);
+		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)), new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())), new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
+		double x = sceneWidth + player.getWidth() * 2;
+		scoreText = new SimpleText(ColorResource.WHITE, "Score: 0", x + 20, 100);
+		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0), scoreText);
 	}
 
 	private void background() {
