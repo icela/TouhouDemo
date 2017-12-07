@@ -51,7 +51,7 @@ public class Touhou extends Game {
 	private FTimer shootTimer = new FTimer(18);
 	private FTimer enemyTimer = new FTimer(600);
 	private FTimer enemyShootTimer = new FTimer(300);
-	private static final int sceneWidth = 300;
+	private static final int sceneWidth = 380;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
 	private List<ImageObject> enemyBullets = new LinkedList<>();
@@ -99,7 +99,7 @@ public class Touhou extends Game {
 	@Override
 	public void onRefresh() {
 		eventManager.check();
-		if (shootTimer.ended()) if (direction.get(4)) {
+		if (shootTimer.ended() && direction.get(4) && !player.getDied()) {
 			ImageObject bullet = bullet();
 			bullets.add(bullet);
 			addObject(1, bullet);
@@ -151,6 +151,7 @@ public class Touhou extends Game {
 				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
 				gameOver.setTextSize(100);
 				addObject(2, gameOver);
+				player.setDied(true);
 				eventManager.insert(DelayedEvent.millisFromNow(1000, () -> {
 					dialogShow("满身疮痍", "你鸡寄了");
 					onExit();
