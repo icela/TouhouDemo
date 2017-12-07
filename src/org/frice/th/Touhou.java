@@ -4,6 +4,7 @@ import org.frice.Game;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.*;
 import org.frice.obj.AttachedObjects;
+import org.frice.obj.FObject;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -40,12 +41,13 @@ public class Touhou extends Game {
 	private BoolArray direction = new BoolArray(6);
 	private int speed = fastSpeed;
 	private int score = 0;
-	private AttachedObjects playerEntity;
+	private int life = 3;
+	private AttachedObjects<FObject> playerEntity;
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
-	private FTimer shootTimer = new FTimer(30);
+	private FTimer shootTimer = new FTimer(18);
 	private FTimer enemyTimer = new FTimer(600);
-	private FTimer enemyShootTimer = new FTimer(1200);
+	private FTimer enemyShootTimer = new FTimer(300);
 	private static final int sceneWidth = 300;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
@@ -54,6 +56,7 @@ public class Touhou extends Game {
 	private ImageResource darkBackground;
 	private ImageResource shineBackground;
 	private SimpleText scoreText;
+	private SimpleText lifeText;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -98,8 +101,9 @@ public class Touhou extends Game {
 			bullets.add(bullet);
 			addObject(1, bullet);
 		}
-		if (enemyTimer.ended()) addObject(1, enemy((int) (Math.log(FClock.INSTANCE.getCurrent()) * 100)));
-		if (enemyShootTimer.ended()) enemies.forEach(e -> addObject(1, enemyBullet(e)));
+		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
+			addObject(1, enemy((int) (Math.log(FClock.INSTANCE.getCurrent()) * 100)));
+		if (enemyShootTimer.ended() && Math.random() < 0.3) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
 			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) playerEntity.move(-speed, 0);
@@ -110,11 +114,12 @@ public class Touhou extends Game {
 				playerEntity.move(0, speed);
 		}
 		scoreText.setText("Score: " + score);
+		lifeText.setText("Life: " + life);
 		enemies.forEach(e -> {
 			bullets.forEach(b -> {
 				if (e.collides(b)) {
 					b.setDied(true);
-					e.blood -= 80;
+					e.blood -= 200;
 					if (e.blood <= 0) {
 						e.setDied(true);
 						score += 1;
@@ -123,23 +128,29 @@ public class Touhou extends Game {
 			});
 			if (e.collides(player)) e.setDied(true);
 		});
-		enemyBullets.forEach(b -> {
+		enemyBullets.removeIf(b -> {
 			if (b.collides(player)) {
-				player.setDied(true);
-				dialogShow("满身疮痍", "你鸡寄了");
-				onExit();
+				b.setDied(true);
+				life--;
+				return true;
 			}
+			return false;
 		});
+		if (life < 0) {
+			dialogShow("满身疮痍", "你鸡寄了");
+			onExit();
+		}
 	}
 
 	@NotNull
 	private ImageObject enemyBullet(BloodedObject e) {
 		ImageResource bigImage = ImageResource.fromPath("./res/th11/enemy/enemy2.png");
 		int rand = (int) (Math.random() * 4) * 32;
-		ImageObject ret = new ImageObject(new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50), e.getX() + (e.getWidth() - 32) / 2, e.getY() + (e.getHeight() - 32) / 2);
+		// new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50)
+		ImageObject ret = new ImageObject(bigImage.part(0, rand, 32, 32), e.getX() + (e.getWidth() - 32) / 2, e.getY() + (e.getHeight() - 32) / 2);
 		ret.addAnim(new ChasingMove(ret, player, 60));
-		ret.addAnim(new AccurateMove(0, 500));
-		ret.addAnim(new DirectedMove(ret, player.getX(), player.getY(), 300));
+		ret.addAnim(new AccurateMove(0, 300));
+		ret.addAnim(new DirectedMove(ret, player.getX(), player.getY(), 100));
 		enemyBullets.add(ret);
 		return ret;
 	}
@@ -185,12 +196,13 @@ public class Touhou extends Game {
 		player = player();
 		ShapeObject playerBox = new ShapeObject(ColorResource.DARK_GRAY, new FRectangle(2, 2), player.getX() + 15, player.getY() + 23);
 		player.setCollisionBox(playerBox);
-		playerEntity = new AttachedObjects(Arrays.asList(player, playerBox));
+		playerEntity = new AttachedObjects<>(Arrays.asList(player, playerBox));
 		addObject(1, player);
 		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)), new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())), new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
 		double x = sceneWidth + player.getWidth() * 2;
-		scoreText = new SimpleText(ColorResource.WHITE, "Score: 0", x + 20, 100);
-		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0), scoreText);
+		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
+		lifeText = new SimpleText(ColorResource.WHITE, "", x + 20, 120);
+		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0), scoreText, lifeText);
 	}
 
 	private void background() {
