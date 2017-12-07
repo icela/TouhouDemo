@@ -128,6 +128,7 @@ public class Touhou extends Game {
 			});
 			if (e.collides(player)) e.setDied(true);
 		});
+		int enemyBulletSize = enemyBullets.size();
 		enemyBullets.removeIf(b -> {
 			if (b.collides(player)) {
 				b.setDied(true);
@@ -135,6 +136,10 @@ public class Touhou extends Game {
 				return true;
 			}
 			return false;
+		});
+		if (enemyBulletSize != enemyBullets.size()) enemyBullets.removeIf(b -> {
+			b.setDied(true);
+			return true;
 		});
 		if (life < 0) {
 			dialogShow("满身疮痍", "你鸡寄了");
