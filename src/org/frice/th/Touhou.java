@@ -45,6 +45,7 @@ public class Touhou extends Game {
 	private AttachedObjects<FObject> playerEntity;
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
+	private FTimer checkTimer = new FTimer(3);
 	private FTimer shootTimer = new FTimer(18);
 	private FTimer enemyTimer = new FTimer(600);
 	private FTimer enemyShootTimer = new FTimer(300);
@@ -94,8 +95,6 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
-		enemies.removeIf(ImageObject::getDied);
-		bullets.removeIf(ImageObject::getDied);
 		if (shootTimer.ended()) if (direction.get(4)) {
 			ImageObject bullet = bullet();
 			bullets.add(bullet);
@@ -113,37 +112,41 @@ public class Touhou extends Game {
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
 				playerEntity.move(0, speed);
 		}
-		scoreText.setText("Score: " + score);
-		lifeText.setText("Life: " + life);
-		enemies.forEach(e -> {
-			bullets.forEach(b -> {
-				if (e.collides(b)) {
-					b.setDied(true);
-					e.blood -= 200;
-					if (e.blood <= 0) {
-						e.setDied(true);
-						score += 1;
+		if (checkTimer.ended()) {
+			enemies.removeIf(ImageObject::getDied);
+			bullets.removeIf(ImageObject::getDied);
+			scoreText.setText("Score: " + score);
+			lifeText.setText("Life: " + life);
+			enemies.forEach(e -> {
+				bullets.forEach(b -> {
+					if (e.collides(b)) {
+						b.setDied(true);
+						e.blood -= 200;
+						if (e.blood <= 0) {
+							e.setDied(true);
+							score += 1;
+						}
 					}
-				}
+				});
+				if (e.collides(player)) e.setDied(true);
 			});
-			if (e.collides(player)) e.setDied(true);
-		});
-		int enemyBulletSize = enemyBullets.size();
-		enemyBullets.removeIf(b -> {
-			if (b.collides(player)) {
+			int enemyBulletSize = enemyBullets.size();
+			enemyBullets.removeIf(b -> {
+				if (b.collides(player)) {
+					b.setDied(true);
+					life--;
+					return true;
+				}
+				return false;
+			});
+			if (enemyBulletSize != enemyBullets.size()) enemyBullets.removeIf(b -> {
 				b.setDied(true);
-				life--;
 				return true;
+			});
+			if (life < 0) {
+				dialogShow("满身疮痍", "你鸡寄了");
+				onExit();
 			}
-			return false;
-		});
-		if (enemyBulletSize != enemyBullets.size()) enemyBullets.removeIf(b -> {
-			b.setDied(true);
-			return true;
-		});
-		if (life < 0) {
-			dialogShow("满身疮痍", "你鸡寄了");
-			onExit();
 		}
 	}
 
