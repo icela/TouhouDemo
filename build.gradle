@@ -24,10 +24,10 @@ allprojects { repositories { maven { url 'https://jitpack.io' } } }
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 dependencies {
-	// compile "com.github.icela:FriceEngine:v$frice_version"
-	// compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
-	// compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-	compile name: "engine-all-$frice_version"
+	compile "com.github.icela:FriceEngine:v$frice_version"
+	compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+	// compile name: "engine-all-$frice_version"
 
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
