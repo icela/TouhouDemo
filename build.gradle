@@ -4,13 +4,15 @@ apply plugin: 'java'
 
 buildscript {
 	ext.kotlin_version = '1.2.0'
-	ext.frice_version = '1.7.5'
+	ext.frice_version = '1.7.7'
 	repositories { mavenCentral() }
 }
 
+def useLocalFriceEngine = false
+
 repositories {
 	mavenCentral()
-	flatDir { dirs '../FriceEngine/build/libs' }
+	if (useLocalFriceEngine) flatDir { dirs '../FriceEngine/build/libs' }
 }
 
 sourceSets {
@@ -24,10 +26,13 @@ allprojects { repositories { maven { url 'https://jitpack.io' } } }
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 dependencies {
-	compile "com.github.icela:FriceEngine:v$frice_version"
-	compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
-	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-	// compile name: "engine-all-$frice_version"
+	if (useLocalFriceEngine) {
+		compile name: "engine-all-$frice_version"
+	} else {
+		compile "com.github.icela:FriceEngine:v$frice_version"
+		compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+		compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+	}
 
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }

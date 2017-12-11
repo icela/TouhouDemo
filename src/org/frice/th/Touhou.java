@@ -4,8 +4,6 @@ import org.frice.Game;
 import org.frice.anim.RotateAnim;
 import org.frice.anim.move.*;
 import org.frice.event.DelayedEvent;
-import org.frice.obj.AttachedObjects;
-import org.frice.obj.FObject;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -15,8 +13,8 @@ import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.th.obj.BloodedObject;
 import org.frice.utils.EventManager;
-import org.frice.utils.audio.AudioManager;
-import org.frice.utils.audio.AudioPlayer;
+import org.frice.utils.media.AudioManager;
+import org.frice.utils.media.AudioPlayer;
 import org.frice.utils.message.FLog;
 import org.frice.utils.shape.FRectangle;
 import org.frice.utils.time.FClock;
@@ -40,7 +38,6 @@ public class Touhou extends Game {
 	private int speed = fastSpeed;
 	private int score = 0;
 	private int life = 3;
-	private AttachedObjects<FObject> playerEntity;
 	private ImageObject player;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer checkTimer = new FTimer(3);
@@ -66,14 +63,11 @@ public class Touhou extends Game {
 
 	@Override
 	public void onInit() {
-		AudioPlayer audioPlayer = AudioManager.getPlayer("./res/bgm.mp3");
-		audioPlayer.start();
 		setSize(640, 480);
 		setAutoGC(true);
 		setShowFPS(true);
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
-		enemyBigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		addKeyListener(null, event -> {
 			speed = event.isShiftDown() ? 1 : fastSpeed;
 			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
@@ -103,12 +97,12 @@ public class Touhou extends Game {
 		if (enemyShootTimer.ended() && Math.random() < 0.3) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
-			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) playerEntity.move(-speed, 0);
+			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) player.move(-speed, 0);
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() - player.getWidth() < sceneWidth)
-				playerEntity.move(speed, 0);
-			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) playerEntity.move(0, -speed);
+				player.move(speed, 0);
+			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.move(0, -speed);
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
-				playerEntity.move(0, speed);
+				player.move(0, speed);
 		}
 		if (checkTimer.ended()) {
 			enemies.removeIf(ImageObject::getDied);
@@ -171,6 +165,7 @@ public class Touhou extends Game {
 		ret.addAnim(new AccurateMove(0, 300));
 		ret.addAnim(new DirectedMove(ret, player.getX(), player.getY(), 100));
 		enemyBullets.add(ret);
+		ret.setCollisionBox(ret.smallerBox(5));
 		return ret;
 	}
 
@@ -198,28 +193,26 @@ public class Touhou extends Game {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
 		object.addAnim(new RotateAnim(3));
-		if (enemies.size() > 0 && Math.random() < 0.4) {
-			ImageObject enemy = enemies.stream().reduce((e1, e2) -> Math.abs(e1.getX() - player.getX()) + Math.abs(e1.getY() - player.getY()) < Math.abs(e2.getX() - player.getX()) * Math.abs(e2.getY() - player.getY()) ? e1 : e2).get();
-			object.addAnim(new DirectedMove(object, enemy.getX() - enemy.getWidth() / 2, enemy.getY() - enemy.getHeight() / 2, 1000));
-		} else object.addAnim(new AccurateMove(0, -1000));
+		object.addAnim(new AccurateMove(0, -1000));
 		bullets.add(object);
 		return object;
 	}
 
 	@Override
 	public void onLastInit() {
+		enemyBigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		player = player();
-		ShapeObject playerBox = new ShapeObject(ColorResource.DARK_GRAY, new FRectangle(2, 2), player.getX() + 15, player.getY() + 23);
-		player.setCollisionBox(playerBox);
-		playerEntity = new AttachedObjects<>(Arrays.asList(player, playerBox));
+		player.setCollisionBox(player.smallerBox(player.getWidth() / 3, player.getHeight() / 3));
 		addObject(1, player);
 		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)), new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())), new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
 		double x = sceneWidth + player.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
 		lifeText = new SimpleText(ColorResource.WHITE, "", x + 20, 120);
 		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0), scoreText, lifeText);
+		AudioPlayer audioPlayer = AudioManager.getPlayer("./res/bgm.mp3");
+		audioPlayer.start();
 	}
 
 	private void background() {
