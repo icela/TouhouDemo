@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.lang.Math.PI;
 import static org.frice.Initializer.launch;
 
 public class Touhou extends Game {
@@ -59,6 +60,8 @@ public class Touhou extends Game {
 	private ImageResource shineBackground;
 	private SimpleText scoreText;
 	private SimpleText lifeText;
+	private double angle = 0.0;
+	private boolean useAngle = false;
 	private EventManager eventManager = new EventManager();
 	private ImageResource enemyBigImage;
 	private ThreadPoolExecutor executor = new ThreadPoolExecutor(20, 60, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<>(20), new ThreadPoolExecutor.DiscardPolicy());
@@ -76,13 +79,16 @@ public class Touhou extends Game {
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
 		addKeyListener(null, event -> {
-			speed = event.isShiftDown() ? 1 : fastSpeed;
+			speed = event.isShiftDown() ? 2 : fastSpeed;
 			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
-			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o1 -> o1.setRes(shineBackground));
+			if (event.getKeyCode() == KeyEvent.VK_CONTROL) {
+				backgroundImages.forEach(o1 -> o1.setRes(shineBackground));
+				useAngle = !useAngle;
+			}
 		}, event -> {
-			speed = event.isShiftDown() ? 1 : fastSpeed;
+			speed = event.isShiftDown() ? 2 : fastSpeed;
 			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, false);
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
@@ -102,17 +108,28 @@ public class Touhou extends Game {
 		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
 			addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
+		System.out.println(angle);
+		while (angle > 3 * PI) angle -= (3 * PI);
+		while (angle < 0) angle += (3 * PI);
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
-			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) player.move(-speed, 0);
-			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT) && player.getX() - player.getWidth() < sceneWidth)
-				player.move(speed, 0);
+			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT)) {
+				if (player.getX() > 10) player.move(-speed, 0);
+				if (speed == fastSpeed && angle > PI / 2) angle -= 0.1;
+			}
+			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT)) {
+				if (player.getX() - player.getWidth() < sceneWidth) player.move(speed, 0);
+				if (speed == fastSpeed && angle < PI + PI / 2) angle += 0.1;
+			}
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.move(0, -speed);
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
 				player.move(0, speed);
 		}
+		enemies.forEach(bloodedObject -> {
+			if (!collides(bloodedObject)) bloodedObject.setDied(true);
+		});
 		if (checkTimer.ended()) {
-			enemies.removeIf(ImageObject::getDied);
+			enemies.removeIf(BloodedObject::getDied);
 			bullets.removeIf(ImageObject::getDied);
 			scoreText.setText("Score: " + score);
 			lifeText.setText("Life: " + life);
@@ -169,7 +186,7 @@ public class Touhou extends Game {
 		// new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50)
 		ImageObject ret = new ImageObject(bigImage.part(rand, size << 1, size, size), e.getX() + (e.getWidth() - size) / 2, e.getY() + (e.getHeight() - size) / 2);
 		ret.addAnim(new ChasingMove(ret, player, 60));
-		ret.addAnim(new AccurateMove(0, 300));
+		ret.addAnim(new AccurateMove(0, e.getY() > player.getY() ? -300 : 300));
 		ret.addAnim(new DirectedMove(ret, player.getX(), player.getY(), 100));
 		enemyBullets.add(ret);
 		ret.setCollisionBox(ret.smallerBox(5));
@@ -198,20 +215,33 @@ public class Touhou extends Game {
 	@NotNull
 	private ImageObject[] bullet() {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
-		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
-		ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 + 20, player.getY());
-		ImageObject object3 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 - 20, player.getY());
-		RotateAnim anim = new RotateAnim(Math.PI * 10);
-		object.addAnim(anim);
-		object2.addAnim(anim);
-		object3.addAnim(anim);
-		object.addAnim(new AccurateMove(0, -1000));
-		object2.addAnim(new AccurateMove(200, -1000));
-		object3.addAnim(new AccurateMove(-200, -1000));
-		bullets.add(object);
-		bullets.add(object2);
-		bullets.add(object3);
-		return new ImageObject[]{object, object2, object3};
+		if (useAngle) {
+			ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY() + player.getHeight() / 2);
+			ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY() + player.getHeight() / 2);
+			RotateAnim anim = new RotateAnim(PI * 10);
+			object.addAnim(anim);
+			object2.addAnim(anim);
+			object.addAnim(AccurateMove.byAngle(angle, 1000));
+			object2.addAnim(AccurateMove.byAngle(angle + PI, 1000));
+			bullets.add(object);
+			bullets.add(object2);
+			return new ImageObject[]{object, object2};
+		} else {
+			ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
+			ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 + 20, player.getY());
+			ImageObject object3 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 - 20, player.getY());
+			RotateAnim anim = new RotateAnim(PI * 10);
+			object.addAnim(anim);
+			object2.addAnim(anim);
+			object3.addAnim(anim);
+			object.addAnim(new AccurateMove(0, -1000));
+			object2.addAnim(new AccurateMove(200, -1000));
+			object3.addAnim(new AccurateMove(-200, -1000));
+			bullets.add(object);
+			bullets.add(object2);
+			bullets.add(object3);
+			return new ImageObject[]{object, object2, object3};
+		}
 	}
 
 	@Override
