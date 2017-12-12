@@ -8,7 +8,7 @@ buildscript {
 	repositories { mavenCentral() }
 }
 
-def useLocalFriceEngine = true
+def useLocalFriceEngine = false
 
 repositories {
 	mavenCentral()
