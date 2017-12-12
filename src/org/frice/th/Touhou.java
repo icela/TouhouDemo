@@ -23,7 +23,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,8 +48,8 @@ public class Touhou extends Game {
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer checkTimer = new FTimer(3);
 	private FTimer shootTimer = new FTimer(18);
-	private FTimer enemyTimer = new FTimer(600);
-	private FTimer enemyShootTimer = new FTimer(300);
+	private FTimer enemyTimer = new FTimer(500);
+	private FTimer enemyShootTimer = new FTimer(200);
 	private static final int sceneWidth = 380;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
@@ -55,6 +61,7 @@ public class Touhou extends Game {
 	private SimpleText lifeText;
 	private EventManager eventManager = new EventManager();
 	private ImageResource enemyBigImage;
+	private ThreadPoolExecutor executor = new ThreadPoolExecutor(20, 60, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<>(20), new ThreadPoolExecutor.DiscardPolicy());
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -94,7 +101,7 @@ public class Touhou extends Game {
 		if (shootTimer.ended() && direction.get(4) && !player.getDied()) addObject(1, bullet());
 		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
 			addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
-		if (enemyShootTimer.ended() && Math.random() < 0.3) enemies.forEach(e -> addObject(1, enemyBullet(e)));
+		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
 			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT) && player.getX() > 10) player.move(-speed, 0);
@@ -116,7 +123,7 @@ public class Touhou extends Game {
 						e.blood -= 200;
 						if (e.blood <= 0) {
 							e.setDied(true);
-							// AudioManager.play("./res/shake.wav");
+							executor.execute(AudioManager.getPlayer("./res/shake.mp3"));
 							score += 1;
 						}
 					}
@@ -189,13 +196,22 @@ public class Touhou extends Game {
 	}
 
 	@NotNull
-	private ImageObject bullet() {
+	private ImageObject[] bullet() {
 		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
 		ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
-		object.addAnim(new RotateAnim(3));
+		ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 + 20, player.getY());
+		ImageObject object3 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 - 20, player.getY());
+		RotateAnim anim = new RotateAnim(Math.PI * 10);
+		object.addAnim(anim);
+		object2.addAnim(anim);
+		object3.addAnim(anim);
 		object.addAnim(new AccurateMove(0, -1000));
+		object2.addAnim(new AccurateMove(200, -1000));
+		object3.addAnim(new AccurateMove(-200, -1000));
 		bullets.add(object);
-		return object;
+		bullets.add(object2);
+		bullets.add(object3);
+		return new ImageObject[]{object, object2, object3};
 	}
 
 	@Override
