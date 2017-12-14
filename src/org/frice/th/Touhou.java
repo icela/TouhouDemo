@@ -1,8 +1,8 @@
 package org.frice.th;
 
 import org.frice.Game;
-import org.frice.anim.RotateAnim;
 import org.frice.anim.move.*;
+import org.frice.anim.rotate.SimpleRotate;
 import org.frice.event.DelayedEvent;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
@@ -218,7 +218,7 @@ public class Touhou extends Game {
 		if (useAngle) {
 			ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY() + player.getHeight() / 2);
 			ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY() + player.getHeight() / 2);
-			RotateAnim anim = new RotateAnim(PI * 10);
+			SimpleRotate anim = new SimpleRotate(PI * 10);
 			object.addAnim(anim);
 			object2.addAnim(anim);
 			object.addAnim(AccurateMove.byAngle(angle, 1000));
@@ -230,7 +230,7 @@ public class Touhou extends Game {
 			ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
 			ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 + 20, player.getY());
 			ImageObject object3 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 - 20, player.getY());
-			RotateAnim anim = new RotateAnim(PI * 10);
+			SimpleRotate anim = new SimpleRotate(PI * 10);
 			object.addAnim(anim);
 			object2.addAnim(anim);
 			object3.addAnim(anim);
