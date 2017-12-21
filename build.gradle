@@ -1,12 +1,16 @@
 group 'org.ice1000'
 version '1.0'
+
 apply plugin: 'java'
+apply plugin: 'application'
 
 buildscript {
 	ext.kotlin_version = '1.2.10'
 	ext.frice_version = '1.7.12'
 	repositories { mavenCentral() }
 }
+
+mainClassName = 'org.frice.th.Touhou'
 
 def useLocalFriceEngine = false
 
