@@ -92,6 +92,15 @@ public class Touhou extends Game {
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
+		playerItself = player();
+		playerPoint = playerPoint();
+		playerPoint.addAnim(new SimpleRotate(2));
+		playerPoint.setVisible(false);
+		playerPoint2 = playerPoint();
+		playerPoint2.addAnim(new SimpleRotate(-2));
+		playerPoint2.setVisible(false);
+		player = new AttachedObjects<>(Arrays.asList(playerItself, playerPoint, playerPoint2));
+		playerItself.setCollisionBox(playerItself.smallerBox(playerItself.getWidth() / 3, playerItself.getHeight() / 3));
 	}
 
 	private void dealWithShift(boolean bool) {
@@ -221,7 +230,7 @@ public class Touhou extends Game {
 	@Contract(pure = true)
 	private ImageObject playerPoint() {
 		ImageResource image = ImageResource.fromPath("./res/th11/bullet/etama2.png").part(0, 16, 64, 64);
-		return new ImageObject(image, (sceneWidth >>> 1) - 1, getHeight() - 50);
+		return new ImageObject(image, playerItself.getX() + (playerItself.getWidth() - image.getImage().getWidth()) / 2, getHeight() - 50);
 	}
 
 	@NotNull
@@ -262,16 +271,7 @@ public class Touhou extends Game {
 		enemyBigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
-		playerItself = player();
-		playerPoint = playerPoint();
-		playerPoint.addAnim(new SimpleRotate(10));
-		playerPoint.setVisible(false);
-		playerPoint2 = playerPoint();
-		playerPoint2.addAnim(new SimpleRotate(-10));
-		playerPoint2.setVisible(false);
-		player = new AttachedObjects<>(Arrays.asList(playerItself, playerPoint));
-		playerItself.setCollisionBox(playerItself.smallerBox(playerItself.getWidth() / 3, playerItself.getHeight() / 3));
-		addObject(1, playerItself, playerPoint);
+		addObject(1, playerItself, playerPoint, playerPoint2);
 		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)), new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())), new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
 		double x = sceneWidth + playerItself.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
