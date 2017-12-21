@@ -3,6 +3,7 @@ package org.frice.th;
 import org.frice.Game;
 import org.frice.anim.move.*;
 import org.frice.anim.rotate.SimpleRotate;
+import org.frice.obj.AttachedObjects;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -21,10 +22,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -43,10 +41,12 @@ public class Touhou extends Game {
 	private int speed = fastSpeed;
 	private int score = 0;
 	private int life = 3;
-	private ImageObject player;
+	private AttachedObjects<ImageObject> player;
+	private ImageObject playerItself;
+	private ImageObject playerPoint, playerPoint2;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer checkTimer = new FTimer(3);
-	private FTimer shootTimer = new FTimer(18);
+	private FTimer shootTimer = new FTimer(36);
 	private FTimer enemyTimer = new FTimer(500);
 	private FTimer enemyShootTimer = new FTimer(200);
 	private static final int sceneWidth = 380;
@@ -77,7 +77,7 @@ public class Touhou extends Game {
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
 		addKeyListener(null, event -> {
-			speed = event.isShiftDown() ? 2 : fastSpeed;
+			dealWithShift(event.isShiftDown());
 			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
@@ -86,12 +86,24 @@ public class Touhou extends Game {
 				useAngle = !useAngle;
 			}
 		}, event -> {
-			speed = event.isShiftDown() ? 2 : fastSpeed;
+			dealWithShift(event.isShiftDown());
 			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
 				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, false);
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
+	}
+
+	private void dealWithShift(boolean bool) {
+		if (bool) {
+			speed = 2;
+			playerPoint.setVisible(true);
+			playerPoint2.setVisible(true);
+		} else {
+			speed = fastSpeed;
+			playerPoint.setVisible(false);
+			playerPoint2.setVisible(false);
+		}
 	}
 
 	@Override
@@ -101,7 +113,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
-		if (shootTimer.ended() && direction.get(4) && !player.getDied()) addObject(1, bullet());
+		if (shootTimer.ended() && direction.get(4) && !playerItself.getDied()) addObject(1, bullet());
 		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
 			addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
@@ -110,20 +122,17 @@ public class Touhou extends Game {
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
 			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT)) {
-				if (player.getX() > 10) player.move(-speed, 0);
+				if (playerItself.getX() > 10) player.move(-speed, 0);
 				if (speed == fastSpeed && angle > PI / 2) angle -= 0.1;
 			}
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT)) {
-				if (player.getX() - player.getWidth() < sceneWidth) player.move(speed, 0);
+				if (playerItself.getX() - playerItself.getWidth() < sceneWidth) player.move(speed, 0);
 				if (speed == fastSpeed && angle < PI + PI / 2) angle += 0.1;
 			}
-			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && player.getY() > 10) player.move(0, -speed);
-			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && player.getY() < getHeight() - player.getHeight() - 10)
+			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && playerItself.getY() > 10) player.move(0, -speed);
+			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && playerItself.getY() < getHeight() - playerItself.getHeight() - 10)
 				player.move(0, speed);
 		}
-		enemies.forEach(bloodedObject -> {
-			if (!collides(bloodedObject)) bloodedObject.setDied(true);
-		});
 		if (checkTimer.ended()) {
 			enemies.removeIf(BloodedObject::getDied);
 			bullets.removeIf(ImageObject::getDied);
@@ -141,12 +150,12 @@ public class Touhou extends Game {
 						}
 					}
 				});
-				if (e.collides(player)) e.setDied(true);
+				if (e.collides(playerItself)) e.setDied(true);
 			});
 			int enemyBulletSize = enemyBullets.size();
 			enemyBullets.removeIf(b -> {
-				if (player.getDied()) return false;
-				if (b.collides(player)) {
+				if (playerItself.getDied()) return false;
+				if (b.collides(playerItself)) {
 					b.setDied(true);
 					life--;
 					return true;
@@ -157,7 +166,7 @@ public class Touhou extends Game {
 				b.setDied(true);
 				return true;
 			});
-			if (life < 0 && !player.getDied()) {
+			if (life < 0 && !playerItself.getDied()) {
 				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
 				gameOver.setTextSize(100);
 				addObject(2, gameOver);
@@ -169,7 +178,7 @@ public class Touhou extends Game {
 					dialogShow("满身疮痍", "你鸡寄了");
 					onExit();
 				});
-				player.setDied(true);
+				playerItself.setDied(true);
 			}
 		}
 	}
@@ -181,9 +190,9 @@ public class Touhou extends Game {
 		int rand = (int) (Math.random() * 4) * size;
 		// new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50)
 		ImageObject ret = new ImageObject(bigImage.part(rand, size << 1, size, size), e.getX() + (e.getWidth() - size) / 2, e.getY() + (e.getHeight() - size) / 2);
-		ret.addAnim(new ChasingMove(ret, player, 60));
-		ret.addAnim(new AccurateMove(0, e.getY() > player.getY() ? -300 : 300));
-		ret.addAnim(new DirectedMove(ret, player.getX(), player.getY(), 100));
+		ret.addAnim(new ChasingMove(ret, playerItself, 60));
+		ret.addAnim(new AccurateMove(0, e.getY() > playerItself.getY() ? -300 : 300));
+		ret.addAnim(new DirectedMove(ret, playerItself.getX(), playerItself.getY(), 100));
 		enemyBullets.add(ret);
 		ret.setCollisionBox(ret.smallerBox(5));
 		return ret;
@@ -195,7 +204,7 @@ public class Touhou extends Game {
 		final int num = (int) (Math.random() * 4);
 		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1).mapToObj(x -> enemyBigImage.part(x * size, size * (8 + num), size, size)).collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
-		ret.addAnim(new ApproachingMove(ret, player, 0.3));
+		ret.addAnim(new ApproachingMove(ret, playerItself, 0.3));
 		ret.addAnim(new AccurateMove(0, 200));
 		enemies.add(ret);
 		return ret;
@@ -209,11 +218,19 @@ public class Touhou extends Game {
 	}
 
 	@NotNull
+	@Contract(pure = true)
+	private ImageObject playerPoint() {
+		ImageResource image = ImageResource.fromPath("./res/th11/bullet/etama2.png").part(0, 16, 64, 64);
+		return new ImageObject(image, (sceneWidth >>> 1) - 1, getHeight() - 50);
+	}
+
+	@NotNull
 	private ImageObject[] bullet() {
-		ImageResource bullet = new FileImageResource("./res/th11/player/pl01/pl01.png").part(16, 160, 16, 16);
+		ImageResource pic = new FileImageResource("./res/th11/player/pl01/pl01.png");
 		if (useAngle) {
-			ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY() + player.getHeight() / 2);
-			ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY() + player.getHeight() / 2);
+			ImageResource bullet = pic.part(16, 160, 16, 16);
+			ImageObject object = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2, playerItself.getY() + playerItself.getHeight() / 2);
+			ImageObject object2 = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2, playerItself.getY() + playerItself.getHeight() / 2);
 			SimpleRotate anim = new SimpleRotate(PI * 10);
 			object.addAnim(anim);
 			object2.addAnim(anim);
@@ -223,13 +240,13 @@ public class Touhou extends Game {
 			bullets.add(object2);
 			return new ImageObject[]{object, object2};
 		} else {
-			ImageObject object = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2, player.getY());
-			ImageObject object2 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 + 20, player.getY());
-			ImageObject object3 = new ImageObject(bullet, player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 - 20, player.getY());
-			SimpleRotate anim = new SimpleRotate(PI * 10);
-			object.addAnim(anim);
-			object2.addAnim(anim);
-			object3.addAnim(anim);
+			ImageResource bullet = pic.part(0, 144, 32, 16);
+			ImageObject object = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2, playerItself.getY());
+			ImageObject object2 = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2 + 20, playerItself.getY());
+			ImageObject object3 = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2 - 20, playerItself.getY());
+			object.rotate(-PI / 2);
+			object2.rotate(-PI / 2 + 0.1);
+			object3.rotate(-PI / 2 - 0.1);
 			object.addAnim(new AccurateMove(0, -1000));
 			object2.addAnim(new AccurateMove(200, -1000));
 			object3.addAnim(new AccurateMove(-200, -1000));
@@ -245,11 +262,18 @@ public class Touhou extends Game {
 		enemyBigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
-		player = player();
-		player.setCollisionBox(player.smallerBox(player.getWidth() / 3, player.getHeight() / 3));
-		addObject(1, player);
+		playerItself = player();
+		playerPoint = playerPoint();
+		playerPoint.addAnim(new SimpleRotate(10));
+		playerPoint.setVisible(false);
+		playerPoint2 = playerPoint();
+		playerPoint2.addAnim(new SimpleRotate(-10));
+		playerPoint2.setVisible(false);
+		player = new AttachedObjects<>(Arrays.asList(playerItself, playerPoint));
+		playerItself.setCollisionBox(playerItself.smallerBox(playerItself.getWidth() / 3, playerItself.getHeight() / 3));
+		addObject(1, playerItself, playerPoint);
 		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)), new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())), new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
-		double x = sceneWidth + player.getWidth() * 2;
+		double x = sceneWidth + playerItself.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
 		lifeText = new SimpleText(ColorResource.WHITE, "", x + 20, 120);
 		addObject(2, new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0), scoreText, lifeText);
