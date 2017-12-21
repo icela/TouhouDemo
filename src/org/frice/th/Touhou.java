@@ -3,7 +3,6 @@ package org.frice.th;
 import org.frice.Game;
 import org.frice.anim.move.*;
 import org.frice.anim.rotate.SimpleRotate;
-import org.frice.event.DelayedEvent;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -12,7 +11,6 @@ import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.th.obj.BloodedObject;
-import org.frice.utils.EventManager;
 import org.frice.utils.media.AudioManager;
 import org.frice.utils.media.AudioPlayer;
 import org.frice.utils.message.FLog;
@@ -62,7 +60,6 @@ public class Touhou extends Game {
 	private SimpleText lifeText;
 	private double angle = 0.0;
 	private boolean useAngle = false;
-	private EventManager eventManager = new EventManager();
 	private ImageResource enemyBigImage;
 	private ThreadPoolExecutor executor = new ThreadPoolExecutor(20, 60, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<>(20), new ThreadPoolExecutor.DiscardPolicy());
 
@@ -75,6 +72,7 @@ public class Touhou extends Game {
 	public void onInit() {
 		setSize(640, 480);
 		setAutoGC(true);
+		getLayers(0).setAutoGC(false);
 		setShowFPS(true);
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.ERROR);
@@ -103,12 +101,10 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
-		eventManager.check();
 		if (shootTimer.ended() && direction.get(4) && !player.getDied()) addObject(1, bullet());
 		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
 			addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
-		System.out.println(angle);
 		while (angle > 3 * PI) angle -= (3 * PI);
 		while (angle < 0) angle += (3 * PI);
 		if (moveTimer.ended()) {
@@ -165,14 +161,14 @@ public class Touhou extends Game {
 				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
 				gameOver.setTextSize(100);
 				addObject(2, gameOver);
-				eventManager.insert(DelayedEvent.millisFromNow(100, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10)))));
-				eventManager.insert(DelayedEvent.millisFromNow(200, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10)))));
-				eventManager.insert(DelayedEvent.millisFromNow(300, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10)))));
-				eventManager.insert(DelayedEvent.millisFromNow(400, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10)))));
-				eventManager.insert(DelayedEvent.millisFromNow(2500, () -> {
+				runLater(100, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
+				runLater(200, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
+				runLater(300, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
+				runLater(400, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
+				runLater(2500, () -> {
 					dialogShow("满身疮痍", "你鸡寄了");
 					onExit();
-				}));
+				});
 				player.setDied(true);
 			}
 		}

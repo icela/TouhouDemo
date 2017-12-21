@@ -3,8 +3,8 @@ version '1.0'
 apply plugin: 'java'
 
 buildscript {
-	ext.kotlin_version = '1.2.0'
-	ext.frice_version = 'v1.7.10'
+	ext.kotlin_version = '1.2.10'
+	ext.frice_version = '1.7.12'
 	repositories { mavenCentral() }
 }
 
@@ -27,10 +27,10 @@ tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 dependencies {
 	if (useLocalFriceEngine) {
-		compile name: "engine-all-$frice_version"
+		compile name: "engine-$frice_version-all"
 	} else {
-		compile "com.github.icela:FriceEngine:$frice_version"
-		// compile "com.github.icela:FriceEngine:$frice_version:sources"
+		compile "com.github.icela:FriceEngine:v$frice_version"
+		// compile "com.github.icela:FriceEngine:v$frice_version:sources"
 		compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 		compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
 	}
