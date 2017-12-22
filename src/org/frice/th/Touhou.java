@@ -3,6 +3,7 @@ package org.frice.th;
 import org.frice.Game;
 import org.frice.anim.move.*;
 import org.frice.anim.rotate.SimpleRotate;
+import org.frice.event.DelayedEvent;
 import org.frice.obj.AttachedObjects;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
@@ -12,12 +13,12 @@ import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.th.obj.BloodedObject;
-import org.frice.utils.media.AudioManager;
-import org.frice.utils.media.AudioPlayer;
-import org.frice.utils.message.FLog;
-import org.frice.utils.shape.FRectangle;
-import org.frice.utils.time.FClock;
-import org.frice.utils.time.FTimer;
+import org.frice.util.media.AudioManager;
+import org.frice.util.media.AudioPlayer;
+import org.frice.util.message.FLog;
+import org.frice.util.shape.FRectangle;
+import org.frice.util.time.FClock;
+import org.frice.util.time.FTimer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +42,7 @@ public class Touhou extends Game {
 	private int speed = fastSpeed;
 	private int score = 0;
 	private int life = 3;
-	private AttachedObjects<ImageObject> player;
+	private AttachedObjects player;
 	private ImageObject playerItself;
 	private ImageObject playerPoint, playerPoint2;
 	private FTimer moveTimer = new FTimer(12);
@@ -99,8 +100,8 @@ public class Touhou extends Game {
 		playerPoint2 = playerPoint();
 		playerPoint2.addAnim(new SimpleRotate(-2));
 		playerPoint2.setVisible(false);
-		player = new AttachedObjects<>(Arrays.asList(playerItself, playerPoint, playerPoint2));
-		playerItself.setCollisionBox(playerItself.smallerBox(playerItself.getWidth() / 3, playerItself.getHeight() / 3));
+		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
+		playerItself.setCollisionBox(playerItself.smallerBox(28, 15, 13, 13));
 	}
 
 	private void dealWithShift(boolean bool) {
@@ -123,8 +124,8 @@ public class Touhou extends Game {
 	@Override
 	public void onRefresh() {
 		if (shootTimer.ended() && direction.get(4) && !playerItself.getDied()) addObject(1, bullet());
-		if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++)
-			addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
+		if (enemyTimer.ended())
+			for (int i = 0; i < Math.random() * 3; i++) addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		while (angle > 3 * PI) angle -= (3 * PI);
 		while (angle < 0) angle += (3 * PI);
@@ -183,10 +184,11 @@ public class Touhou extends Game {
 				runLater(200, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
 				runLater(300, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
 				runLater(400, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
-				runLater(2500, () -> {
+				DelayedEvent event = DelayedEvent.millisFromNow(2500, () -> {
 					dialogShow("满身疮痍", "你鸡寄了");
 					onExit();
 				});
+				runLater(event);
 				playerItself.setDied(true);
 			}
 		}
@@ -200,10 +202,10 @@ public class Touhou extends Game {
 		// new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50)
 		ImageObject ret = new ImageObject(bigImage.part(rand, size << 1, size, size), e.getX() + (e.getWidth() - size) / 2, e.getY() + (e.getHeight() - size) / 2);
 		ret.addAnim(new ChasingMove(ret, playerItself, 60));
-		ret.addAnim(new AccurateMove(0, e.getY() > playerItself.getY() ? -300 : 300));
-		ret.addAnim(new DirectedMove(ret, playerItself.getX(), playerItself.getY(), 100));
+		ret.addAnim(new AccurateMove(0, 300 * (e.getY() > playerItself.getY() ? -1 : 1)));
+		ret.addAnim(new DirectedMove(ret, playerItself.getX(), playerItself.getY(), 50));
 		enemyBullets.add(ret);
-		ret.setCollisionBox(ret.smallerBox(5));
+		ret.setCollisionBox(ret.smallerBox(2));
 		return ret;
 	}
 
@@ -254,8 +256,8 @@ public class Touhou extends Game {
 			ImageObject object2 = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2 + 20, playerItself.getY());
 			ImageObject object3 = new ImageObject(bullet, playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2 - 20, playerItself.getY());
 			object.rotate(-PI / 2);
-			object2.rotate(-PI / 2 + 0.1);
-			object3.rotate(-PI / 2 - 0.1);
+			object2.rotate(-PI / 2 + 0.2);
+			object3.rotate(-PI / 2 - 0.2);
 			object.addAnim(new AccurateMove(0, -1000));
 			object2.addAnim(new AccurateMove(200, -1000));
 			object3.addAnim(new AccurateMove(-200, -1000));
