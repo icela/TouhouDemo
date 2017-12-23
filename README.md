@@ -7,7 +7,13 @@ This is a demo project for [FriceEngine](https://github.com/icela/FriceEngine).
 
 ## Run
 
-import this project in your IntelliJ IDEA, and copy your favorite music (mp3/wav) and rename it as `res/bgm.mp3`,
-and run `org.frice.th.Touhou`.
+First clone it, and copy your favorite music (mp3/wav) and rename it as `res/bgm.mp3`.
 
+Then you can
+
+```shell
+$ gradle run
+```
+
+Or run the Java class `org.frice.th.Touhou` in your favorite IDE.
 

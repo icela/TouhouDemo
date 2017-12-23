@@ -43,6 +43,7 @@ dependencies {
 }
 
 jar {
+	baseName = 'game'
 	manifest { attributes 'Main-Class': 'org.frice.th.Touhou' }
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }

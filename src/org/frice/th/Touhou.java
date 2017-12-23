@@ -12,7 +12,6 @@ import org.frice.resource.graphics.ColorResource;
 import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
-import org.frice.th.obj.BloodedObject;
 import org.frice.util.media.AudioManager;
 import org.frice.util.media.AudioPlayer;
 import org.frice.util.message.FLog;
@@ -308,5 +307,14 @@ public class Touhou extends Game {
 
 	public static void main(String[] args) {
 		launch(Touhou.class);
+	}
+}
+
+class BloodedObject extends ImageObject {
+	public int blood;
+
+	BloodedObject(@NotNull ImageResource res, double x, double y, int blood) {
+		super(res, x, y);
+		this.blood = blood;
 	}
 }
