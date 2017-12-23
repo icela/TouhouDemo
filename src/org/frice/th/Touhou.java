@@ -178,16 +178,20 @@ public class Touhou extends Game {
 			if (life < 0 && !playerItself.getDied()) {
 				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
 				gameOver.setTextSize(100);
-				addObject(2, gameOver);
-				runLater(100, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
-				runLater(200, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
-				runLater(300, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
-				runLater(400, () -> IntStream.range(0, 10).forEach(i -> addObject(1, enemy(10))));
-				DelayedEvent event = DelayedEvent.millisFromNow(2500, () -> {
+				final int timeToReallyDie = 1200;
+				ImageResource cirnoImage = ImageResource.fromPath("./res/die-cirno.png");
+				ImageObject cirno = new ImageObject(cirnoImage, -cirnoImage.getImage().getWidth(), getHeight() - cirnoImage.getImage().getHeight());
+				cirno.addAnim(new SimpleMove(cirnoImage.getImage().getWidth() * 1000 / timeToReallyDie, 0));
+				addObject(cirno);
+				DelayedEvent event = DelayedEvent.millisFromNow(timeToReallyDie, () -> {
+					addObject(2, gameOver);
+					cirno.stopAnims();
+				});
+				runLater(event);
+				runLater(timeToReallyDie + 300, () -> {
 					dialogShow("满身疮痍", "你鸡寄了");
 					onExit();
 				});
-				runLater(event);
 				playerItself.setDied(true);
 			}
 		}
