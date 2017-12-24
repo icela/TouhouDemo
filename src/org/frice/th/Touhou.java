@@ -39,16 +39,13 @@ public class Touhou extends Game {
 	private BitSet direction = new BitSet(6);
 	private int speed = fastSpeed;
 	private int score = 0;
-	private int life = 3;
+	private int life = 10;
 	private AttachedObjects player;
 	private ImageObject playerItself;
 	private GameCharacter gameCharacter;
 	private ImageObject playerPoint, playerPoint2;
-	private FTimer moveTimer = new FTimer(12);
-	private FTimer checkTimer = new FTimer(3);
-	private FTimer shootTimer = new FTimer(72);
-	private FTimer enemyTimer = new FTimer(500);
-	private FTimer enemyShootTimer = new FTimer(200);
+	private FTimer moveTimer = new FTimer(12), enemyTimer = new FTimer(500), checkTimer = new FTimer(3), shootTimer = new FTimer(
+			72), enemyShootTimer = new FTimer(200);
 	static final int sceneWidth = 380;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();

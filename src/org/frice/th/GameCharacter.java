@@ -62,6 +62,7 @@ public interface GameCharacter {
 		public void dealWithBullet(@NotNull ImageObject bullet) {
 			bullet.addAnim(new SimpleRotate(30));
 			bullet.move(20, -20);
+			bullet.addAnim(new AccurateMove((Math.random() - 0.5) * 800, (Math.random() - 0.5) * 800));
 			int i = 0, duration = 40;
 			for (; i < afterUsedBullet.size(); i++) {
 				ImageResource afterBullet = afterUsedBullet.get(i);
