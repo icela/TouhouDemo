@@ -6,7 +6,7 @@ apply plugin: 'application'
 
 buildscript {
 	ext.kotlin_version = '1.2.10'
-	ext.frice_version = '1.8.1'
+	ext.frice_version = '1.8.2'
 	ext.lice_version = '1.2'
 	repositories { mavenCentral() }
 }
@@ -30,22 +30,39 @@ allprojects { repositories { maven { url 'https://jitpack.io' } } }
 
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
+configurations { library }
+
 dependencies {
+	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+	compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+
 	if (useLocalFriceEngine) {
-		compile name: "engine-$frice_version-all"
+		library name: "engine-$frice_version"
 	} else {
-		compile "com.github.icela:FriceEngine:v$frice_version"
-		// compile "com.github.icela:FriceEngine:v$frice_version:sources"
-		compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-		compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+		library "com.github.icela:FriceEngine:v$frice_version"
 	}
-	compile "com.github.lice-lang:lice-tiny:v$lice_version"
+
+	library "com.github.lice-lang:lice-tiny:v$lice_version"
+
+	configurations.compile.extendsFrom(configurations.library)
 
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 jar {
 	baseName = 'game'
-	manifest { attributes 'Main-Class': 'org.frice.th.Touhou' }
-	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	manifest { attributes 'Main-Class': mainClassName }
+}
+
+task fatJar(type: Jar) {
+	baseName = 'game-all'
+	description 'Assembles a jar archive containing the main classes and all the dependencies.'
+	group 'build'
+	from { configurations.library.collect { it.isDirectory() ? it : zipTree(it) } }
+	with jar
+}
+
+artifacts {
+	archives fatJar
+	archives jar
 }

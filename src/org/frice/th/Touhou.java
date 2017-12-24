@@ -58,6 +58,7 @@ public class Touhou extends Game {
 	private boolean useAngle = false;
 	private ImageResource enemyBigImage;
 	private AudioPlayer bgmPlayer;
+	public static String sourceRoot;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -72,6 +73,7 @@ public class Touhou extends Game {
 		setShowFPS(true);
 		FLog.setLevel(FLog.WARN);
 		life = 2;
+		sourceRoot = "./res";
 		SymbolList liceEnv = SymbolList.with(symbolList -> {
 			symbolList.provideFunction("use-reimu-a", o -> gameCharacter = new GameCharacter.Reimu(this));
 			symbolList.provideFunction("use-marisa-a", o -> gameCharacter = new GameCharacter.Marisa(this));
@@ -87,6 +89,7 @@ public class Touhou extends Game {
 				if (!ls.isEmpty()) life = (Integer) ls.get(0);
 				return life;
 			});
+			symbolList.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
 		});
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
@@ -116,7 +119,7 @@ public class Touhou extends Game {
 		playerPoint2.setVisible(false);
 		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
 		playerItself.setCollisionBox(playerItself.smallerBox(28, 15, 13, 13));
-		bgmPlayer = AudioManager.getPlayer("./res/bgm.mp3");
+		bgmPlayer = AudioManager.getPlayer(sourceRoot + "/bgm.mp3");
 	}
 
 	private void dealWithShift(boolean bool) {
@@ -197,7 +200,7 @@ public class Touhou extends Game {
 				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
 				gameOver.setTextSize(100);
 				final int timeToReallyDie = 1200;
-				ImageResource cirnoImage = ImageResource.fromPath("./res/die-cirno.png");
+				ImageResource cirnoImage = ImageResource.fromPath(sourceRoot + "/die-cirno.png");
 				ImageObject cirno = new ImageObject(cirnoImage,
 						-cirnoImage.getImage().getWidth(),
 						getHeight() - cirnoImage.getImage().getHeight());
@@ -218,7 +221,7 @@ public class Touhou extends Game {
 
 	@NotNull
 	private ImageObject enemyBullet(BloodedObject e) {
-		ImageResource bigImage = ImageResource.fromPath("./res/th11/bullet/etama.png");
+		ImageResource bigImage = ImageResource.fromPath(sourceRoot + "/th11/bullet/etama.png");
 		int size = 16;
 		int rand = (int) (Math.random() * 4) * size;
 		// new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50)
@@ -250,7 +253,7 @@ public class Touhou extends Game {
 	@NotNull
 	@Contract(pure = true)
 	private ImageObject playerHitbox() {
-		ImageResource image = ImageResource.fromPath("./res/th11/bullet/etama2.png").part(0, 16, 64, 64);
+		ImageResource image = ImageResource.fromPath(sourceRoot + "/th11/bullet/etama2.png").part(0, 16, 64, 64);
 		return new ImageObject(image,
 				playerItself.getX() + (playerItself.getWidth() - image.getImage().getWidth()) / 2,
 				getHeight() - 50);
@@ -282,7 +285,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onLastInit() {
-		enemyBigImage = ImageResource.fromPath("./res/th11/enemy/enemy.png");
+		enemyBigImage = ImageResource.fromPath(sourceRoot + "/th11/enemy/enemy.png");
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		addObject(1, playerItself, playerPoint, playerPoint2);
@@ -302,8 +305,8 @@ public class Touhou extends Game {
 
 	private void background() {
 		backgroundImages = new ArrayList<>(backgroundPicCountX * backgroundPicCountY);
-		darkBackground = new FileImageResource("./res/th11/background/stage04/stage04c.png");
-		shineBackground = new FileImageResource("./res/th11/background/stage04/stage04b.png");
+		darkBackground = new FileImageResource(sourceRoot + "/th11/background/stage04/stage04c.png");
+		shineBackground = new FileImageResource(sourceRoot + "/th11/background/stage04/stage04b.png");
 		for (int x = 0; x < backgroundPicCountX; x++)
 			for (int y = 0; y < backgroundPicCountY; y++) {
 				ImageObject object = new ImageObject(darkBackground,

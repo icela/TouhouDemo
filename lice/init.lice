@@ -5,3 +5,4 @@
 (title "Touhou game by ice1000")
 
 (life 10)
+(assets-root "./res")

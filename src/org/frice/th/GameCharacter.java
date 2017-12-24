@@ -38,8 +38,8 @@ public interface GameCharacter {
 
 	class Reimu implements GameCharacter {
 		@NotNull Touhou game;
-		static @NotNull String REIMU_RES = "./res/th11/player/pl00/pl00.png";
-		static @NotNull ImageResource bigImage = ImageResource.fromPath(REIMU_RES);
+		@NotNull String REIMU_RES = Touhou.sourceRoot + "/th11/player/pl00/pl00.png";
+		@NotNull ImageResource bigImage = ImageResource.fromPath(REIMU_RES);
 		private @NotNull ImageResource mainBullet = bigImage.part(0, 176, 64, 16);
 		private @NotNull List<@NotNull ImageResource> afterUsedBullet = IntStream.of(0, 1, 3)
 				.mapToObj(i -> bigImage.part(i * 8, 144, 16, 16))
@@ -78,7 +78,7 @@ public interface GameCharacter {
 	}
 
 	class Marisa implements GameCharacter {
-		static @NotNull String MARISA_RES = "./res/th11/player/pl01/pl01.png";
+		static @NotNull String MARISA_RES = Touhou.sourceRoot + "/th11/player/pl01/pl01.png";
 		static @NotNull ImageResource bigImage = ImageResource.fromPath(MARISA_RES);
 		@NotNull ImageResource mainBullet = bigImage.part(0, 144, 32, 16);
 		@NotNull Touhou game;
