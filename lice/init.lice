@@ -1,2 +1,4 @@
 (use-reimu-a)
 ; (use-marisa-a)
+
+(set-millis-to-refresh 12)

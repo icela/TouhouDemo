@@ -54,10 +54,8 @@ public class Touhou extends Game {
 	private List<ImageObject> bullets = new LinkedList<>();
 	private List<ImageObject> enemyBullets = new LinkedList<>();
 	private List<ImageObject> backgroundImages;
-	private ImageResource darkBackground;
-	private ImageResource shineBackground;
-	private SimpleText scoreText;
-	private SimpleText lifeText;
+	private ImageResource darkBackground, shineBackground;
+	private SimpleText scoreText, lifeText;
 	private double angle = 0.0;
 	private boolean useAngle = false;
 	private ImageResource enemyBigImage;
@@ -74,11 +72,14 @@ public class Touhou extends Game {
 		setAutoGC(true);
 		getLayers(0).setAutoGC(false);
 		setShowFPS(true);
-		setMillisToRefresh(12);
 		FLog.setLevel(FLog.WARN);
 		SymbolList liceEnv = SymbolList.with(symbolList -> {
 			symbolList.provideFunction("use-reimu-a", o -> gameCharacter = new GameCharacter.Reimu(this));
 			symbolList.provideFunction("use-marisa-a", o -> gameCharacter = new GameCharacter.Marisa(this));
+			symbolList.provideFunction("set-millis-to-refresh", ls -> {
+				setMillisToRefresh((Integer) ls.get(0));
+				return null;
+			});
 		});
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
@@ -96,14 +97,14 @@ public class Touhou extends Game {
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
-		System.out.println(System.currentTimeMillis());
+		System.out.println(FClock.getCurrent());
 		Lice.run(FileUtils.file2String("./lice/init.lice"), liceEnv);
-		System.out.println(System.currentTimeMillis());
+		System.out.println(FClock.getCurrent());
 		playerItself = gameCharacter.player();
-		playerPoint = playerPoint();
+		playerPoint = playerHitbox();
 		playerPoint.addAnim(new SimpleRotate(2));
 		playerPoint.setVisible(false);
-		playerPoint2 = playerPoint();
+		playerPoint2 = playerHitbox();
 		playerPoint2.addAnim(new SimpleRotate(-2));
 		playerPoint2.setVisible(false);
 		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
@@ -156,15 +157,18 @@ public class Touhou extends Game {
 			scoreText.setText("Score: " + score);
 			lifeText.setText("Life: " + life);
 			enemies.forEach(e -> {
-				bullets.forEach(b -> {
+				bullets.removeIf(b -> {
 					if (e.collides(b)) {
-						b.setDied(true);
+						gameCharacter.dealWithBullet(b);
+						b.addAnim(new SimpleMove(0, 500));
 						e.blood -= 200;
 						if (e.blood <= 0) {
 							e.setDied(true);
 							score += 1;
 						}
+						return true;
 					}
+					return false;
 				});
 				if (e.collides(playerItself)) e.setDied(true);
 			});
@@ -230,7 +234,7 @@ public class Touhou extends Game {
 		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
 				.mapToObj(x -> enemyBigImage.part(x * size, size * (8 + num), size, size))
 				.collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
-		ret.addAnim(new ApproachingMove(ret, playerItself, 0.3));
+		ret.addAnim(new ApproachingMove(ret, playerItself, 0.4));
 		ret.addAnim(new AccurateMove(0, 200));
 		enemies.add(ret);
 		return ret;
@@ -238,7 +242,7 @@ public class Touhou extends Game {
 
 	@NotNull
 	@Contract(pure = true)
-	private ImageObject playerPoint() {
+	private ImageObject playerHitbox() {
 		ImageResource image = ImageResource.fromPath("./res/th11/bullet/etama2.png").part(0, 16, 64, 64);
 		return new ImageObject(image,
 				playerItself.getX() + (playerItself.getWidth() - image.getImage().getWidth()) / 2,
