@@ -1,4 +1,7 @@
 (use-reimu-a)
 ; (use-marisa-a)
 
-(set-millis-to-refresh 12)
+(millis-to-refresh 12)
+(title "Touhou game by ice1000")
+
+(life 10)

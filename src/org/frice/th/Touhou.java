@@ -40,7 +40,7 @@ public class Touhou extends Game {
 	private BitSet direction = new BitSet(6);
 	private int speed = fastSpeed;
 	private int score = 0;
-	private int life = 10;
+	private int life;
 	private AttachedObjects player;
 	private ImageObject playerItself;
 	private GameCharacter gameCharacter;
@@ -71,12 +71,21 @@ public class Touhou extends Game {
 		getLayers(0).setAutoGC(false);
 		setShowFPS(true);
 		FLog.setLevel(FLog.WARN);
+		life = 2;
 		SymbolList liceEnv = SymbolList.with(symbolList -> {
 			symbolList.provideFunction("use-reimu-a", o -> gameCharacter = new GameCharacter.Reimu(this));
 			symbolList.provideFunction("use-marisa-a", o -> gameCharacter = new GameCharacter.Marisa(this));
-			symbolList.provideFunction("set-millis-to-refresh", ls -> {
+			symbolList.provideFunction("millis-to-refresh", ls -> {
 				setMillisToRefresh((Integer) ls.get(0));
 				return null;
+			});
+			symbolList.provideFunction("title", ls -> {
+				setTitle(ls.get(0).toString());
+				return null;
+			});
+			symbolList.provideFunction("life", ls -> {
+				if (!ls.isEmpty()) life = (Integer) ls.get(0);
+				return life;
 			});
 		});
 		addKeyListener(null, event -> {
