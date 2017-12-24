@@ -1,5 +1,6 @@
 package org.frice.th;
 
+import kotlin.text.StringsKt;
 import org.frice.Game;
 import org.frice.anim.move.*;
 import org.frice.anim.rotate.SimpleRotate;
@@ -65,7 +66,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onInit() {
-		setSize(640, 480);
+		setSize(640 + 50, 480);
 		setAutoGC(true);
 		getLayers(0).setAutoGC(false);
 		setShowFPS(true);
@@ -152,7 +153,7 @@ public class Touhou extends Game {
 			enemies.removeIf(BloodedObject::getDied);
 			bullets.removeIf(ImageObject::getDied);
 			scoreText.setText("Score: " + score);
-			lifeText.setText("Life: " + life);
+			if (life > 0) lifeText.setText("Life: " + StringsKt.repeat("★", life));
 			enemies.forEach(e -> {
 				bullets.removeIf(b -> {
 					if (e.collides(b)) {
