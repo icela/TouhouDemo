@@ -6,14 +6,14 @@ apply plugin: 'application'
 
 buildscript {
 	ext.kotlin_version = '1.2.10'
-	ext.frice_version = '1.8.2'
+	ext.frice_version = '1.8.1'
 	ext.lice_version = '1.2'
 	repositories { mavenCentral() }
 }
 
 mainClassName = 'org.frice.th.Touhou'
 
-def useLocalFriceEngine = true
+def useLocalFriceEngine = false
 
 repositories {
 	mavenCentral()

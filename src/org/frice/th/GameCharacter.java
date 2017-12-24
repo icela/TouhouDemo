@@ -13,13 +13,13 @@ import java.util.stream.IntStream;
 
 import static java.lang.Math.PI;
 
-public interface SelfPlane {
+public interface GameCharacter {
 	@NotNull ImageObject player();
 
 	@NotNull List<@NotNull ImageObject> bullets();
 
-	@NotNull
-	static List<@NotNull ImageObject> makeLeftRightBullets(@NotNull ImageObject player, @NotNull ImageResource bullet) {
+	static @NotNull List<@NotNull ImageObject> makeLeftRightBullets(
+			@NotNull ImageObject player, @NotNull ImageResource bullet) {
 		ImageObject left = new ImageObject(bullet,
 				player.getX() + (player.getWidth() - bullet.getImage().getWidth()) / 2 - 10,
 				player.getY());
@@ -33,15 +33,12 @@ public interface SelfPlane {
 		return Arrays.asList(left, right);
 	}
 
-	class Reimu implements SelfPlane {
+	class Reimu implements GameCharacter {
 		@NotNull Touhou game;
-		@NotNull
-		static String REIMU_RES = "./res/th11/player/pl00/pl00.png";
-		@NotNull
-		static ImageResource bigImage = ImageResource.fromPath(REIMU_RES);
+		static @NotNull String REIMU_RES = "./res/th11/player/pl00/pl00.png";
+		static @NotNull ImageResource bigImage = ImageResource.fromPath(REIMU_RES);
 		@NotNull ImageResource mainBullet = bigImage.part(0, 176, 64, 16);
-		@NotNull
-		private ImageObject player;
+		private @NotNull ImageObject player;
 
 		Reimu(@NotNull Touhou game) {
 			this.game = game;
@@ -55,18 +52,15 @@ public interface SelfPlane {
 			return makeLeftRightBullets(player, mainBullet);
 		}
 
-		@NotNull
 		@Override
-		public ImageObject player() {
+		public @NotNull ImageObject player() {
 			return player;
 		}
 	}
 
-	class Marisa implements SelfPlane {
-		@NotNull
-		static String MARISA_RES = "./res/th11/player/pl01/pl01.png";
-		@NotNull
-		static ImageResource bigImage = ImageResource.fromPath(MARISA_RES);
+	class Marisa implements GameCharacter {
+		static @NotNull String MARISA_RES = "./res/th11/player/pl01/pl01.png";
+		static @NotNull ImageResource bigImage = ImageResource.fromPath(MARISA_RES);
 		@NotNull ImageResource mainBullet = bigImage.part(0, 144, 32, 16);
 		@NotNull Touhou game;
 		@NotNull ImageObject player;
@@ -78,9 +72,8 @@ public interface SelfPlane {
 					.collect(Collectors.toList()), 50), (Touhou.sceneWidth >>> 1) - 1, game.getHeight() - 50);
 		}
 
-		@NotNull
 		@Override
-		public ImageObject player() {
+		public @NotNull ImageObject player() {
 			return player;
 		}
 

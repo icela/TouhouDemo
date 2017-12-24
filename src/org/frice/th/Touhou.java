@@ -42,7 +42,7 @@ public class Touhou extends Game {
 	private int life = 3;
 	private AttachedObjects player;
 	private ImageObject playerItself;
-	private SelfPlane selfPlane;
+	private GameCharacter gameCharacter;
 	private ImageObject playerPoint, playerPoint2;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer checkTimer = new FTimer(3);
@@ -62,7 +62,6 @@ public class Touhou extends Game {
 	private boolean useAngle = false;
 	private ImageResource enemyBigImage;
 	private AudioPlayer bgmPlayer;
-	private SymbolList liceEnv;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -77,9 +76,9 @@ public class Touhou extends Game {
 		setShowFPS(true);
 		setMillisToRefresh(12);
 		FLog.setLevel(FLog.WARN);
-		liceEnv = SymbolList.with(symbolList -> {
-			symbolList.provideFunction("use-reimu-a", o -> selfPlane = new SelfPlane.Reimu(this));
-			symbolList.provideFunction("use-marisa-a", o -> selfPlane = new SelfPlane.Marisa(this));
+		SymbolList liceEnv = SymbolList.with(symbolList -> {
+			symbolList.provideFunction("use-reimu-a", o -> gameCharacter = new GameCharacter.Reimu(this));
+			symbolList.provideFunction("use-marisa-a", o -> gameCharacter = new GameCharacter.Marisa(this));
 		});
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
@@ -100,7 +99,7 @@ public class Touhou extends Game {
 		System.out.println(System.currentTimeMillis());
 		Lice.run(FileUtils.file2String("./lice/init.lice"), liceEnv);
 		System.out.println(System.currentTimeMillis());
-		playerItself = selfPlane.player();
+		playerItself = gameCharacter.player();
 		playerPoint = playerPoint();
 		playerPoint.addAnim(new SimpleRotate(2));
 		playerPoint.setVisible(false);
@@ -247,7 +246,7 @@ public class Touhou extends Game {
 	}
 
 	private List<ImageObject> bullet() {
-		List<ImageObject> imageObjects = selfPlane.bullets();
+		List<ImageObject> imageObjects = gameCharacter.bullets();
 		bullets.addAll(imageObjects);
 		return imageObjects;
 //		ImageResource bigImage = new FileImageResource("./res/th11/player/pl01/pl01.png");
