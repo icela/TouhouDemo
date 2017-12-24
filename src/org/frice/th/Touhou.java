@@ -46,7 +46,7 @@ public class Touhou extends Game {
 	private ImageObject playerPoint, playerPoint2;
 	private FTimer moveTimer = new FTimer(12);
 	private FTimer checkTimer = new FTimer(3);
-	private FTimer shootTimer = new FTimer(36);
+	private FTimer shootTimer = new FTimer(72);
 	private FTimer enemyTimer = new FTimer(500);
 	private FTimer enemyShootTimer = new FTimer(200);
 	static final int sceneWidth = 380;
@@ -76,9 +76,10 @@ public class Touhou extends Game {
 		getLayers(0).setAutoGC(false);
 		setShowFPS(true);
 		setMillisToRefresh(12);
-		FLog.setLevel(FLog.ERROR);
+		FLog.setLevel(FLog.WARN);
 		liceEnv = SymbolList.with(symbolList -> {
-			symbolList.provideFunction("use-reimu-a", o -> selfPlane = new SelfPlane.ReimuA(this));
+			symbolList.provideFunction("use-reimu-a", o -> selfPlane = new SelfPlane.Reimu(this));
+			symbolList.provideFunction("use-marisa-a", o -> selfPlane = new SelfPlane.Marisa(this));
 		});
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
@@ -130,7 +131,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onRefresh() {
-		if (shootTimer.ended() && direction.get(4) && !playerItself.getDied()) addObject(1, bullet());
+		if (shootTimer.ended() && direction.get(4) && !playerItself.getDied()) bullet().forEach(o -> addObject(1, o));
 		if (enemyTimer.ended())
 			for (int i = 0; i < Math.random() * 3; i++) addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
@@ -245,47 +246,28 @@ public class Touhou extends Game {
 				getHeight() - 50);
 	}
 
-	@NotNull
-	private ImageObject[] bullet() {
-		ImageResource pic = new FileImageResource("./res/th11/player/pl01/pl01.png");
-		if (useAngle) {
-			ImageResource bullet = pic.part(16, 160, 16, 16);
-			ImageObject object = new ImageObject(bullet,
-					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
-					playerItself.getY() + playerItself.getHeight() / 2);
-			ImageObject object2 = new ImageObject(bullet,
-					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
-					playerItself.getY() + playerItself.getHeight() / 2);
-			SimpleRotate anim = new SimpleRotate(PI * 10);
-			object.addAnim(anim);
-			object2.addAnim(anim);
-			object.addAnim(AccurateMove.byAngle(angle, 1000));
-			object2.addAnim(AccurateMove.byAngle(angle + PI, 1000));
-			bullets.add(object);
-			bullets.add(object2);
-			return new ImageObject[]{object, object2};
-		} else {
-			ImageResource bullet = pic.part(0, 144, 32, 16);
-			ImageObject object = new ImageObject(bullet,
-					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
-					playerItself.getY());
-			ImageObject object2 = new ImageObject(bullet,
-					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2 + 20,
-					playerItself.getY());
-			ImageObject object3 = new ImageObject(bullet,
-					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2 - 20,
-					playerItself.getY());
-			object.rotate(-PI / 2);
-			object2.rotate(-PI / 2 + 0.2);
-			object3.rotate(-PI / 2 - 0.2);
-			object.addAnim(new AccurateMove(0, -1000));
-			object2.addAnim(new AccurateMove(200, -1000));
-			object3.addAnim(new AccurateMove(-200, -1000));
-			bullets.add(object);
-			bullets.add(object2);
-			bullets.add(object3);
-			return new ImageObject[]{object, object2, object3};
-		}
+	private List<ImageObject> bullet() {
+		List<ImageObject> imageObjects = selfPlane.bullets();
+		bullets.addAll(imageObjects);
+		return imageObjects;
+//		ImageResource bigImage = new FileImageResource("./res/th11/player/pl01/pl01.png");
+//		if (useAngle) {
+//			ImageResource bullet = bigImage.part(16, 160, 16, 16);
+//			ImageObject object = new ImageObject(bullet,
+//					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
+//					playerItself.getY() + playerItself.getHeight() / 2);
+//			ImageObject object2 = new ImageObject(bullet,
+//					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
+//					playerItself.getY() + playerItself.getHeight() / 2);
+//			SimpleRotate anim = new SimpleRotate(PI * 10);
+//			object.addAnim(anim);
+//			object2.addAnim(anim);
+//			object.addAnim(AccurateMove.byAngle(angle, 1000));
+//			object2.addAnim(AccurateMove.byAngle(angle + PI, 1000));
+//			bullets.add(object);
+//			bullets.add(object2);
+//			return new ImageObject[]{object, object2};
+//		}
 	}
 
 	@Override
