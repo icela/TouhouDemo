@@ -13,8 +13,6 @@ import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.util.FileUtils;
-import org.frice.util.media.AudioManager;
-import org.frice.util.media.AudioPlayer;
 import org.frice.util.message.FLog;
 import org.frice.util.shape.FRectangle;
 import org.frice.util.time.FClock;
@@ -57,7 +55,7 @@ public class Touhou extends Game {
 	private double angle = 0.0;
 	private boolean useAngle = false;
 	private ImageResource enemyBigImage;
-	private AudioPlayer bgmPlayer;
+	// private AudioPlayer bgmPlayer;
 	public static String sourceRoot;
 
 	public Touhou() {
@@ -108,7 +106,7 @@ public class Touhou extends Game {
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
 		System.out.println(FClock.getCurrent());
-		Lice.run(FileUtils.file2String("./lice/init.lice"), liceEnv);
+		Lice.run(FileUtils.file2String(System.getProperty("user.home") + "/.touhou/touhou.lice"), liceEnv);
 		System.out.println(FClock.getCurrent());
 		playerItself = gameCharacter.player();
 		playerPoint = playerHitbox();
@@ -119,7 +117,7 @@ public class Touhou extends Game {
 		playerPoint2.setVisible(false);
 		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
 		playerItself.setCollisionBox(playerItself.smallerBox(28, 15, 13, 13));
-		bgmPlayer = AudioManager.getPlayer(sourceRoot + "/bgm.mp3");
+		// bgmPlayer = AudioManager.getPlayer(sourceRoot + "/bgm.mp3");
 	}
 
 	private void dealWithShift(boolean bool) {
@@ -158,8 +156,8 @@ public class Touhou extends Game {
 				if (speed == fastSpeed && angle < PI + PI / 2) angle += 0.1;
 			}
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && playerItself.getY() > 10) player.move(0, -speed);
-			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && playerItself.getY() < getHeight() - playerItself.getHeight() - 10)
-				player.move(0, speed);
+			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) &&
+					playerItself.getY() < getHeight() - playerItself.getHeight() - 10) player.move(0, speed);
 		}
 		if (checkTimer.ended()) {
 			enemies.removeIf(BloodedObject::getDied);
@@ -200,7 +198,7 @@ public class Touhou extends Game {
 				SimpleText gameOver = new SimpleText(ColorResource.RED, "Game Over", 100, 200);
 				gameOver.setTextSize(100);
 				final int timeToReallyDie = 1200;
-				ImageResource cirnoImage = ImageResource.fromPath(sourceRoot + "/die-cirno.png");
+				ImageResource cirnoImage = ImageResource.fromWeb(sourceRoot + "/die-cirno.png");
 				ImageObject cirno = new ImageObject(cirnoImage,
 						-cirnoImage.getImage().getWidth(),
 						getHeight() - cirnoImage.getImage().getHeight());
@@ -221,7 +219,7 @@ public class Touhou extends Game {
 
 	@NotNull
 	private ImageObject enemyBullet(BloodedObject e) {
-		ImageResource bigImage = ImageResource.fromPath(sourceRoot + "/th11/bullet/etama.png");
+		ImageResource bigImage = ImageResource.fromWeb(sourceRoot + "/th11/bullet/etama.png");
 		int size = 16;
 		int rand = (int) (Math.random() * 4) * size;
 		// new FrameImageResource(IntStream.range(0, 8).mapToObj(x -> bigImage.part(x * 32, rand, 32, 32)).collect(Collectors.toList()), 50)
@@ -253,7 +251,7 @@ public class Touhou extends Game {
 	@NotNull
 	@Contract(pure = true)
 	private ImageObject playerHitbox() {
-		ImageResource image = ImageResource.fromPath(sourceRoot + "/th11/bullet/etama2.png").part(0, 16, 64, 64);
+		ImageResource image = ImageResource.fromWeb(sourceRoot + "/th11/bullet/etama2.png").part(0, 16, 64, 64);
 		return new ImageObject(image,
 				playerItself.getX() + (playerItself.getWidth() - image.getImage().getWidth()) / 2,
 				getHeight() - 50);
@@ -285,7 +283,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onLastInit() {
-		enemyBigImage = ImageResource.fromPath(sourceRoot + "/th11/enemy/enemy.png");
+		enemyBigImage = ImageResource.fromWeb(sourceRoot + "/th11/enemy/enemy.png");
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		addObject(1, playerItself, playerPoint, playerPoint2);
@@ -300,13 +298,13 @@ public class Touhou extends Game {
 				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0),
 				scoreText,
 				lifeText);
-		bgmPlayer.start();
+		// bgmPlayer.start();
 	}
 
 	private void background() {
 		backgroundImages = new ArrayList<>(backgroundPicCountX * backgroundPicCountY);
-		darkBackground = new FileImageResource(sourceRoot + "/th11/background/stage04/stage04c.png");
-		shineBackground = new FileImageResource(sourceRoot + "/th11/background/stage04/stage04b.png");
+		darkBackground = ImageResource.fromWeb(sourceRoot + "/th11/background/stage04/stage04c.png");
+		shineBackground = ImageResource.fromWeb(sourceRoot + "/th11/background/stage04/stage04b.png");
 		for (int x = 0; x < backgroundPicCountX; x++)
 			for (int y = 0; y < backgroundPicCountY; y++) {
 				ImageObject object = new ImageObject(darkBackground,
@@ -315,7 +313,8 @@ public class Touhou extends Game {
 				object.addAnim(new CustomMove() {
 					@Override
 					public double getXDelta(double v) {
-						return -v / (backgroundSpeed << 2) + (object.getX() < -object.getWidth() ? (object.getWidth() * backgroundPicCountX) : 0);
+						return -v / (backgroundSpeed << 2) +
+								(object.getX() < -object.getWidth() ? (object.getWidth() * backgroundPicCountX) : 0);
 					}
 
 					@Override
