@@ -55,7 +55,7 @@ jar {
 }
 
 task fatJar(type: Jar) {
-	baseName = 'game-all'
+	baseName = 'game-plugin'
 	description 'Assembles a jar archive containing the main classes and all the dependencies.'
 	group 'build'
 	from { configurations.library.collect { it.isDirectory() ? it : zipTree(it) } }

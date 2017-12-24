@@ -1,3 +1,4 @@
+(assets-root "./res")
 (use-reimu-a)
 ; (use-marisa-a)
 
@@ -5,4 +6,3 @@
 (title "Touhou game by ice1000")
 
 (life 10)
-(assets-root "https://raw.githubusercontent.com/ice1000/TouhouDemo/master/res")
