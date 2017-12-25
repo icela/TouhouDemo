@@ -8,6 +8,8 @@
   (add-object enemy1 enemy2))
 
 (run-later 3000
+  (stop enemy1)
+  (stop enemy2)
   (-> enemy1 (create-object 500))
   (-> enemy2 (create-object 500))
   (-> enemy3 (create-object 500))

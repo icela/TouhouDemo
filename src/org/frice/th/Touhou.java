@@ -13,7 +13,7 @@ import org.frice.resource.graphics.ColorResource;
 import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
-import org.frice.util.FileUtils;
+import org.frice.th.obj.BloodedObject;
 import org.frice.util.media.AudioManager;
 import org.frice.util.media.AudioPlayer;
 import org.frice.util.message.FLog;
@@ -107,6 +107,10 @@ public class Touhou extends Game {
 				return null;
 			});
 			symbolList.provideFunction("create-object", ls -> enemy(((Integer) ls.get(0))));
+			symbolList.provideFunction("stop", ls -> {
+				((FObject) ls.get(0)).stopAnims();
+				return null;
+			});
 		});
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
@@ -352,11 +356,3 @@ public class Touhou extends Game {
 	}
 }
 
-class BloodedObject extends ImageObject {
-	public int blood;
-
-	BloodedObject(@NotNull ImageResource res, double x, double y, int blood) {
-		super(res, x, y);
-		this.blood = blood;
-	}
-}
