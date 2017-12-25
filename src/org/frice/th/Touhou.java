@@ -9,6 +9,7 @@ import org.frice.obj.FObject;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
+import org.frice.platform.Platforms;
 import org.frice.resource.graphics.ColorResource;
 import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
@@ -45,7 +46,7 @@ public class Touhou extends Game {
 	private int life;
 	private AttachedObjects player;
 	private ImageObject playerItself;
-	private GameCharacter gameCharacter;
+	private GensokyoManager gensokyoManager;
 	private ImageObject playerPoint, playerPoint2;
 	private FTimer moveTimer = new FTimer(12), enemyTimer = new FTimer(500), checkTimer = new FTimer(3), shootTimer = new FTimer(
 			72), enemyShootTimer = new FTimer(200);
@@ -57,7 +58,6 @@ public class Touhou extends Game {
 	private ImageResource darkBackground, shineBackground;
 	private SimpleText scoreText, lifeText;
 	private double angle = 0.0;
-	private boolean useAngle = false;
 	private ImageResource enemyBigImage;
 	private AudioPlayer bgmPlayer;
 	public static String sourceRoot;
@@ -78,8 +78,8 @@ public class Touhou extends Game {
 		life = 2;
 		sourceRoot = "./res";
 		liceEnv = SymbolList.with(symbolList -> {
-			symbolList.provideFunction("use-reimu-a", o -> gameCharacter = new GameCharacter.Reimu(this));
-			symbolList.provideFunction("use-marisa-a", o -> gameCharacter = new GameCharacter.Marisa(this));
+			symbolList.provideFunction("use-reimu-a", o -> gensokyoManager = new GensokyoManager.Reimu(this));
+			symbolList.provideFunction("use-marisa-a", o -> gensokyoManager = new GensokyoManager.Marisa(this));
 			symbolList.provideFunction("millis-to-refresh", ls -> {
 				setMillisToRefresh((Integer) ls.get(0));
 				return null;
@@ -94,7 +94,7 @@ public class Touhou extends Game {
 			});
 			symbolList.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
 			symbolList.defineFunction("run-later", ((metaData, nodes) -> {
-				Integer time = (Integer) nodes.get(0).eval();
+				Number time = (Number) nodes.get(0).eval();
 				if (time != null) runLater(time.longValue(), () -> {
 					for (int i = 0; i < nodes.size(); i++) {
 						if (i != 0) nodes.get(i).eval();
@@ -102,13 +102,27 @@ public class Touhou extends Game {
 				});
 				return new ValueNode(null, metaData);
 			}));
-			symbolList.provideFunction("add-object", ls -> {
-				ls.forEach(i -> addObject(((FObject) i)));
-				return null;
+			symbolList.provideFunction("create-object", ls -> {
+				BloodedObject ret = enemy(((Integer) ls.get(0)));
+				enemies.add(ret);
+				addObject(ret);
+				return ret;
 			});
-			symbolList.provideFunction("create-object", ls -> enemy(((Integer) ls.get(0))));
-			symbolList.provideFunction("stop", ls -> {
-				((FObject) ls.get(0)).stopAnims();
+			symbolList.provideFunction("approach-player", ls -> {
+				BloodedObject ret = (BloodedObject) ls.get(0);
+				Number proportion = (Number) ls.get(1);
+				ret.addAnim(new ApproachingMove(ret, playerItself, proportion.doubleValue()));
+				return ret;
+			});
+			symbolList.provideFunction("move", ls -> {
+				BloodedObject ret = (BloodedObject) ls.get(0);
+				Number x = (Number) ls.get(1);
+				Number y = (Number) ls.get(2);
+				ret.addAnim(new AccurateMove(x.doubleValue(), y.doubleValue()));
+				return ret;
+			});
+			symbolList.provideFunction("stop-anims", ls -> {
+				ls.forEach(o -> ((FObject) o).stopAnims());
 				return null;
 			});
 		});
@@ -118,8 +132,7 @@ public class Touhou extends Game {
 				direction.set(event.getKeyCode() - KeyEvent.VK_LEFT, true);
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, true);
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) {
-				backgroundImages.forEach(o1 -> o1.setRes(shineBackground));
-				useAngle = !useAngle;
+				backgroundImages.forEach(o -> o.setRes(shineBackground));
 			}
 		}, event -> {
 			dealWithShift(event.isShiftDown());
@@ -129,7 +142,7 @@ public class Touhou extends Game {
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
 		Lice.run(new File("./lice/init.lice"), liceEnv);
-		playerItself = gameCharacter.player();
+		playerItself = gensokyoManager.player();
 		playerPoint = playerHitbox();
 		playerPoint.addAnim(new SimpleRotate(2));
 		playerPoint.setVisible(false);
@@ -189,7 +202,7 @@ public class Touhou extends Game {
 			enemies.forEach(e -> {
 				bullets.removeIf(b -> {
 					if (e.collides(b)) {
-						gameCharacter.dealWithBullet(b);
+						gensokyoManager.dealWithBullet(b);
 						b.addAnim(new SimpleMove(0, 500));
 						e.blood -= 200;
 						if (e.blood <= 0) {
@@ -260,14 +273,9 @@ public class Touhou extends Game {
 	private BloodedObject enemy(int blood) {
 		final int size = 32;
 		final int num = (int) (Math.random() * 4);
-		// ImageObject ret = new ImageObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-		BloodedObject ret = new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
+		return new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
 				.mapToObj(x -> enemyBigImage.part(x * size, size * (8 + num), size, size))
 				.collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
-		ret.addAnim(new ApproachingMove(ret, playerItself, 0.4));
-		ret.addAnim(new AccurateMove(0, 200));
-		enemies.add(ret);
-		return ret;
 	}
 
 	@NotNull
@@ -280,27 +288,9 @@ public class Touhou extends Game {
 	}
 
 	private List<ImageObject> bullet() {
-		List<ImageObject> imageObjects = gameCharacter.bullets();
+		List<ImageObject> imageObjects = gensokyoManager.bullets();
 		bullets.addAll(imageObjects);
 		return imageObjects;
-//		ImageResource bigImage = new FileImageResource("./res/th11/player/pl01/pl01.png");
-//		if (useAngle) {
-//			ImageResource bullet = bigImage.part(16, 160, 16, 16);
-//			ImageObject object = new ImageObject(bullet,
-//					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
-//					playerItself.getY() + playerItself.getHeight() / 2);
-//			ImageObject object2 = new ImageObject(bullet,
-//					playerItself.getX() + (playerItself.getWidth() - bullet.getImage().getWidth()) / 2,
-//					playerItself.getY() + playerItself.getHeight() / 2);
-//			SimpleRotate anim = new SimpleRotate(PI * 10);
-//			object.addAnim(anim);
-//			object2.addAnim(anim);
-//			object.addAnim(AccurateMove.byAngle(angle, 1000));
-//			object2.addAnim(AccurateMove.byAngle(angle + PI, 1000));
-//			bullets.add(object);
-//			bullets.add(object2);
-//			return new ImageObject[]{object, object2};
-//		}
 	}
 
 	@Override
@@ -315,8 +305,10 @@ public class Touhou extends Game {
 		double x = sceneWidth + playerItself.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
 		lifeText = new SimpleText(ColorResource.WHITE, "", x + 20, 120);
-		scoreText.setFontName("Microsoft YaHei UI");
-		lifeText.setFontName("Microsoft YaHei UI");
+		if (Platforms.isOnWindows()) {
+			scoreText.setFontName("Microsoft YaHei UI");
+			lifeText.setFontName("Microsoft YaHei UI");
+		}
 		addObject(2,
 				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0),
 				scoreText,

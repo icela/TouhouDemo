@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 import static java.lang.Math.PI;
 
-public interface GameCharacter {
+public interface GensokyoManager {
 	@NotNull ImageObject player();
 
 	@NotNull List<@NotNull ImageObject> bullets();
@@ -36,7 +36,7 @@ public interface GameCharacter {
 
 	void dealWithBullet(@NotNull ImageObject bullet);
 
-	class Reimu implements GameCharacter {
+	class Reimu implements GensokyoManager {
 		@NotNull Touhou game;
 		@NotNull String REIMU_RES = Touhou.sourceRoot + "/th11/player/pl00/pl00.png";
 		@NotNull ImageResource bigImage = ImageResource.fromPath(REIMU_RES);
@@ -77,7 +77,7 @@ public interface GameCharacter {
 		}
 	}
 
-	class Marisa implements GameCharacter {
+	class Marisa implements GensokyoManager {
 		static @NotNull String MARISA_RES = Touhou.sourceRoot + "/th11/player/pl01/pl01.png";
 		static @NotNull ImageResource bigImage = ImageResource.fromPath(MARISA_RES);
 		@NotNull ImageResource mainBullet = bigImage.part(0, 144, 32, 16);

@@ -1,23 +1,27 @@
 (run-later 500
   (-> enemy1 (create-object 200))
-  (add-object enemy1))
+  (move enemy1 0 200))
 
 (run-later 1000
-  (-> enemy1 (create-object 500))
-  (-> enemy2 (create-object 500))
-  (add-object enemy1 enemy2))
+  (-> enemy1 (create-object 1800))
+  (-> enemy2 (create-object 1800))
+  (approach-player enemy1 0.8)
+  (approach-player enemy2 0.8))
 
 (run-later 3000
-  (stop enemy1)
-  (stop enemy2)
   (-> enemy1 (create-object 500))
   (-> enemy2 (create-object 500))
   (-> enemy3 (create-object 500))
-  (add-object enemy1 enemy2 enemy3))
+  (move enemy1 0 100)
+  (approach-player enemy1 0.5)
+  (approach-player enemy2 0.5)
+  (approach-player enemy3 0.5))
+
+(run-later 3200
+  (stop-anims enemy1 enemy2 enemy3))
 
 (run-later 5000
-  (add-object
-    (create-object 1500)
-    (create-object 1500)
-    (create-object 1500)
-    (create-object 1500)))
+  (create-object 1500)
+  (create-object 1500)
+  (create-object 1500)
+  (create-object 1500))
