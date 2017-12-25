@@ -5,6 +5,7 @@ import org.frice.Game;
 import org.frice.anim.move.*;
 import org.frice.anim.rotate.SimpleRotate;
 import org.frice.obj.AttachedObjects;
+import org.frice.obj.FObject;
 import org.frice.obj.button.SimpleText;
 import org.frice.obj.sub.ImageObject;
 import org.frice.obj.sub.ShapeObject;
@@ -17,14 +18,15 @@ import org.frice.util.media.AudioManager;
 import org.frice.util.media.AudioPlayer;
 import org.frice.util.message.FLog;
 import org.frice.util.shape.FRectangle;
-import org.frice.util.time.FClock;
 import org.frice.util.time.FTimer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.lice.Lice;
 import org.lice.core.SymbolList;
+import org.lice.model.ValueNode;
 
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -59,6 +61,7 @@ public class Touhou extends Game {
 	private ImageResource enemyBigImage;
 	private AudioPlayer bgmPlayer;
 	public static String sourceRoot;
+	private SymbolList liceEnv;
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -74,7 +77,7 @@ public class Touhou extends Game {
 		FLog.setLevel(FLog.WARN);
 		life = 2;
 		sourceRoot = "./res";
-		SymbolList liceEnv = SymbolList.with(symbolList -> {
+		liceEnv = SymbolList.with(symbolList -> {
 			symbolList.provideFunction("use-reimu-a", o -> gameCharacter = new GameCharacter.Reimu(this));
 			symbolList.provideFunction("use-marisa-a", o -> gameCharacter = new GameCharacter.Marisa(this));
 			symbolList.provideFunction("millis-to-refresh", ls -> {
@@ -90,6 +93,20 @@ public class Touhou extends Game {
 				return life;
 			});
 			symbolList.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
+			symbolList.defineFunction("run-later", ((metaData, nodes) -> {
+				Integer time = (Integer) nodes.get(0).eval();
+				if (time != null) runLater(time.longValue(), () -> {
+					for (int i = 0; i < nodes.size(); i++) {
+						if (i != 0) nodes.get(i).eval();
+					}
+				});
+				return new ValueNode(null, metaData);
+			}));
+			symbolList.provideFunction("add-object", ls -> {
+				ls.forEach(i -> addObject(((FObject) i)));
+				return null;
+			});
+			symbolList.provideFunction("create-object", ls -> enemy(((Integer) ls.get(0))));
 		});
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
@@ -107,9 +124,7 @@ public class Touhou extends Game {
 			if (event.getKeyCode() == KeyEvent.VK_Z) direction.set(4, false);
 			if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 		});
-		System.out.println(FClock.getCurrent());
-		Lice.run(FileUtils.file2String("./lice/init.lice"), liceEnv);
-		System.out.println(FClock.getCurrent());
+		Lice.run(new File("./lice/init.lice"), liceEnv);
 		playerItself = gameCharacter.player();
 		playerPoint = playerHitbox();
 		playerPoint.addAnim(new SimpleRotate(2));
@@ -120,6 +135,7 @@ public class Touhou extends Game {
 		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
 		playerItself.setCollisionBox(playerItself.smallerBox(28, 15, 13, 13));
 		bgmPlayer = AudioManager.getPlayer(sourceRoot + "/bgm.mp3");
+		enemyBigImage = ImageResource.fromPath(sourceRoot + "/th11/enemy/enemy.png");
 	}
 
 	private void dealWithShift(boolean bool) {
@@ -142,8 +158,8 @@ public class Touhou extends Game {
 	@Override
 	public void onRefresh() {
 		if (shootTimer.ended() && direction.get(4) && !playerItself.getDied()) bullet().forEach(o -> addObject(1, o));
-		if (enemyTimer.ended())
-			for (int i = 0; i < Math.random() * 3; i++) addObject(1, enemy((int) (Math.log(FClock.getCurrent()) * 100)));
+		//if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++) addObject(1, enemy((int) (Math.log(FClock
+		//		.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
 		while (angle > 3 * PI) angle -= (3 * PI);
 		while (angle < 0) angle += (3 * PI);
@@ -158,8 +174,8 @@ public class Touhou extends Game {
 				if (speed == fastSpeed && angle < PI + PI / 2) angle += 0.1;
 			}
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && playerItself.getY() > 10) player.move(0, -speed);
-			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) && playerItself.getY() < getHeight() - playerItself.getHeight() - 10)
-				player.move(0, speed);
+			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) &&
+					playerItself.getY() < getHeight() - playerItself.getHeight() - 10) player.move(0, speed);
 		}
 		if (checkTimer.ended()) {
 			enemies.removeIf(BloodedObject::getDied);
@@ -285,7 +301,6 @@ public class Touhou extends Game {
 
 	@Override
 	public void onLastInit() {
-		enemyBigImage = ImageResource.fromPath(sourceRoot + "/th11/enemy/enemy.png");
 		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		background();
 		addObject(1, playerItself, playerPoint, playerPoint2);
@@ -296,11 +311,14 @@ public class Touhou extends Game {
 		double x = sceneWidth + playerItself.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
 		lifeText = new SimpleText(ColorResource.WHITE, "", x + 20, 120);
+		scoreText.setFontName("Microsoft YaHei UI");
+		lifeText.setFontName("Microsoft YaHei UI");
 		addObject(2,
 				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth() - x, getHeight()), x, 0),
 				scoreText,
 				lifeText);
 		bgmPlayer.start();
+		Lice.run(new File("./lice/damuku.lice"), liceEnv);
 	}
 
 	private void background() {
@@ -315,7 +333,8 @@ public class Touhou extends Game {
 				object.addAnim(new CustomMove() {
 					@Override
 					public double getXDelta(double v) {
-						return -v / (backgroundSpeed << 2) + (object.getX() < -object.getWidth() ? (object.getWidth() * backgroundPicCountX) : 0);
+						return -v / (backgroundSpeed << 2) +
+								(object.getX() < -object.getWidth() ? (object.getWidth() * backgroundPicCountX) : 0);
 					}
 
 					@Override

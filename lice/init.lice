@@ -1,6 +1,7 @@
 (assets-root "./res")
-; (use-reimu-a)
-(use-marisa-a)
+
+(use-reimu-a)
+; (use-marisa-a)
 
 (millis-to-refresh 12)
 (title "Touhou game by ice1000")

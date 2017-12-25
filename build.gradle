@@ -7,7 +7,7 @@ apply plugin: 'application'
 buildscript {
 	ext.kotlin_version = '1.2.10'
 	ext.frice_version = '1.8.2'
-	ext.lice_version = '1.2'
+	ext.lice_version = '1.2.2'
 	repositories { mavenCentral() }
 }
 
@@ -55,9 +55,10 @@ jar {
 }
 
 task fatJar(type: Jar) {
-	baseName = 'game-plugin'
+	baseName = 'game-exe'
 	description 'Assembles a jar archive containing the main classes and all the dependencies.'
 	group 'build'
+	manifest { attributes 'Main-Class': mainClassName }
 	from { configurations.library.collect { it.isDirectory() ? it : zipTree(it) } }
 	with jar
 }
