@@ -12,6 +12,12 @@ First clone it, and copy your favorite music (mp3/wav) and rename it as `res/bgm
 Then you can
 
 ```shell
+$ ./gradlew run
+```
+
+Or if you have a gradle installed in your classpath:
+
+```shell
 $ gradle run
 ```
 

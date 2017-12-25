@@ -47,7 +47,7 @@ public class Touhou extends Game {
 	private ImageObject playerPoint, playerPoint2;
 	private FTimer moveTimer = new FTimer(12), enemyTimer = new FTimer(500), checkTimer = new FTimer(3), shootTimer = new FTimer(
 			72), enemyShootTimer = new FTimer(200);
-	static final int sceneWidth = 380;
+	static final int sceneWidth = 400;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
 	private List<ImageObject> enemyBullets = new LinkedList<>();
@@ -67,7 +67,7 @@ public class Touhou extends Game {
 
 	@Override
 	public void onInit() {
-		setSize(640 + 50, 480);
+		setSize(640 + 50, 560);
 		setAutoGC(true);
 		getLayers(0).setAutoGC(false);
 		setShowFPS(true);
