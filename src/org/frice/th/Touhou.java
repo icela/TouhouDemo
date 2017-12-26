@@ -48,8 +48,10 @@ public class Touhou extends Game {
 	private ImageObject playerItself;
 	private GensokyoManager gensokyoManager;
 	private ImageObject playerPoint, playerPoint2;
-	private FTimer moveTimer = new FTimer(12), enemyTimer = new FTimer(500), checkTimer = new FTimer(3), shootTimer = new FTimer(
-			72), enemyShootTimer = new FTimer(200);
+	private FTimer moveTimer = new FTimer(12);
+	private FTimer checkTimer = new FTimer(3);
+	private FTimer shootTimer = new FTimer(54);
+	private FTimer enemyShootTimer = new FTimer(200);
 	static final int sceneWidth = 400;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
@@ -89,7 +91,7 @@ public class Touhou extends Game {
 				return null;
 			});
 			symbolList.provideFunction("life", ls -> {
-				if (!ls.isEmpty()) life = (Integer) ls.get(0);
+				if (!ls.isEmpty()) life = ((Number) ls.get(0)).intValue();
 				return life;
 			});
 			symbolList.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
