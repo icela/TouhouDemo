@@ -35,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.lang.Math.PI;
 import static org.frice.Initializer.launch;
 
 public class Touhou extends Game {
@@ -62,7 +61,6 @@ public class Touhou extends Game {
 	private List<ImageObject> backgroundImages;
 	private ImageResource darkBackground, shineBackground;
 	private SimpleText scoreText, lifeText;
-	private double angle = 0.0;
 	private ImageResource enemyBigImage;
 	private AudioPlayer bgmPlayer;
 	public static String sourceRoot;
@@ -103,15 +101,13 @@ public class Touhou extends Game {
 			return life;
 		});
 		liceEnv.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
-		liceEnv.defineFunction("run-later", ((metaData, nodes) -> {
+		liceEnv.defineFunction("run-later", (metaData, nodes) -> {
 			Number time = (Number) nodes.get(0).eval();
 			if (time != null) runLater(time.longValue(), () -> {
-				for (int i = 0; i < nodes.size(); i++) {
-					if (i != 0) nodes.get(i).eval();
-				}
+				for (int i = 1; i < nodes.size(); i++) nodes.get(i).eval();
 			});
 			return new ValueNode(null, metaData);
-		}));
+		});
 		liceEnv.provideFunction("create-object", ls -> {
 			BloodedObject ret = enemy(((Integer) ls.get(0)));
 			enemies.add(ret);
@@ -188,17 +184,13 @@ public class Touhou extends Game {
 		//if (enemyTimer.ended()) for (int i = 0; i < Math.random() * 3; i++) addObject(1, enemy((int) (Math.log(FClock
 		//		.getCurrent()) * 100)));
 		if (enemyShootTimer.ended() && Math.random() < 0.6) enemies.forEach(e -> addObject(1, enemyBullet(e)));
-		while (angle > 3 * PI) angle -= (3 * PI);
-		while (angle < 0) angle += (3 * PI);
 		if (moveTimer.ended()) {
 			//noinspection PointlessArithmeticExpression
 			if (direction.get(KeyEvent.VK_LEFT - KeyEvent.VK_LEFT)) {
 				if (playerItself.getX() > 10) player.move(-speed, 0);
-				if (speed == fastSpeed && angle > PI / 2) angle -= 0.1;
 			}
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT)) {
 				if (playerItself.getX() - playerItself.getWidth() < stageWidth) player.move(speed, 0);
-				if (speed == fastSpeed && angle < PI + PI / 2) angle += 0.1;
 			}
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && playerItself.getY() > 10) player.move(0, -speed);
 			if (direction.get(KeyEvent.VK_DOWN - KeyEvent.VK_LEFT) &&
