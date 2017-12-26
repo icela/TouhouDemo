@@ -15,6 +15,9 @@ import org.frice.resource.image.FileImageResource;
 import org.frice.resource.image.FrameImageResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.th.obj.BloodedObject;
+import org.frice.th.self.GensokyoManager;
+import org.frice.th.self.Marisa;
+import org.frice.th.self.Reimu;
 import org.frice.util.media.AudioManager;
 import org.frice.util.media.AudioPlayer;
 import org.frice.util.message.FLog;
@@ -52,7 +55,7 @@ public class Touhou extends Game {
 	private FTimer checkTimer = new FTimer(3);
 	private FTimer shootTimer = new FTimer(54);
 	private FTimer enemyShootTimer = new FTimer(200);
-	static int stageWidth = 400;
+	public static int stageWidth = 400;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
 	private List<ImageObject> enemyBullets = new LinkedList<>();
@@ -80,16 +83,13 @@ public class Touhou extends Game {
 		life = 2;
 		sourceRoot = "./res";
 		liceEnv = new SymbolList();
-		liceEnv.provideFunction("use-reimu-a", o -> gensokyoManager = new GensokyoManager.Reimu(this));
-		liceEnv.provideFunction("use-marisa-a", o -> gensokyoManager = new GensokyoManager.Marisa(this));
+		liceEnv.provideFunction("use-reimu-a", o -> gensokyoManager = new Reimu(this));
+		liceEnv.provideFunction("use-marisa-a", o -> gensokyoManager = new Marisa(this));
 		liceEnv.provideFunction("window-size", ls -> {
 			setSize(((Number) ls.get(0)).intValue(), ((Number) ls.get(1)).intValue());
 			return null;
 		});
-		liceEnv.provideFunction("stage-width", ls -> {
-			stageWidth = ((Number) ls.get(0)).intValue();
-			return null;
-		});
+		liceEnv.provideFunction("stage-width", ls -> stageWidth = ((Number) ls.get(0)).intValue());
 		liceEnv.provideFunction("millis-to-refresh", ls -> {
 			setMillisToRefresh(((Number) ls.get(0)).intValue());
 			return null;
