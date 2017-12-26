@@ -52,7 +52,7 @@ public class Touhou extends Game {
 	private FTimer checkTimer = new FTimer(3);
 	private FTimer shootTimer = new FTimer(54);
 	private FTimer enemyShootTimer = new FTimer(200);
-	static final int sceneWidth = 400;
+	static int stageWidth = 400;
 	private List<BloodedObject> enemies = new LinkedList<>();
 	private List<ImageObject> bullets = new LinkedList<>();
 	private List<ImageObject> enemyBullets = new LinkedList<>();
@@ -79,55 +79,63 @@ public class Touhou extends Game {
 		FLog.setLevel(FLog.WARN);
 		life = 2;
 		sourceRoot = "./res";
-		liceEnv = SymbolList.with(symbolList -> {
-			symbolList.provideFunction("use-reimu-a", o -> gensokyoManager = new GensokyoManager.Reimu(this));
-			symbolList.provideFunction("use-marisa-a", o -> gensokyoManager = new GensokyoManager.Marisa(this));
-			symbolList.provideFunction("millis-to-refresh", ls -> {
-				setMillisToRefresh((Integer) ls.get(0));
-				return null;
-			});
-			symbolList.provideFunction("title", ls -> {
-				setTitle(ls.get(0).toString());
-				return null;
-			});
-			symbolList.provideFunction("life", ls -> {
-				if (!ls.isEmpty()) life = ((Number) ls.get(0)).intValue();
-				return life;
-			});
-			symbolList.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
-			symbolList.defineFunction("run-later", ((metaData, nodes) -> {
-				Number time = (Number) nodes.get(0).eval();
-				if (time != null) runLater(time.longValue(), () -> {
-					for (int i = 0; i < nodes.size(); i++) {
-						if (i != 0) nodes.get(i).eval();
-					}
-				});
-				return new ValueNode(null, metaData);
-			}));
-			symbolList.provideFunction("create-object", ls -> {
-				BloodedObject ret = enemy(((Integer) ls.get(0)));
-				enemies.add(ret);
-				addObject(ret);
-				return ret;
-			});
-			symbolList.provideFunction("approach-player", ls -> {
-				BloodedObject ret = (BloodedObject) ls.get(0);
-				Number proportion = (Number) ls.get(1);
-				ret.addAnim(new ApproachingMove(ret, playerItself, proportion.doubleValue()));
-				return ret;
-			});
-			symbolList.provideFunction("move", ls -> {
-				BloodedObject ret = (BloodedObject) ls.get(0);
-				Number x = (Number) ls.get(1);
-				Number y = (Number) ls.get(2);
-				ret.addAnim(new AccurateMove(x.doubleValue(), y.doubleValue()));
-				return ret;
-			});
-			symbolList.provideFunction("stop-anims", ls -> {
-				ls.forEach(o -> ((FObject) o).stopAnims());
-				return null;
-			});
+		liceEnv = new SymbolList();
+		liceEnv.provideFunction("use-reimu-a", o -> gensokyoManager = new GensokyoManager.Reimu(this));
+		liceEnv.provideFunction("use-marisa-a", o -> gensokyoManager = new GensokyoManager.Marisa(this));
+		liceEnv.provideFunction("window-size", ls -> {
+			setSize(((Number) ls.get(0)).intValue(), ((Number) ls.get(1)).intValue());
+			return null;
 		});
+		liceEnv.provideFunction("stage-width", ls -> {
+			stageWidth = ((Number) ls.get(0)).intValue();
+			return null;
+		});
+		liceEnv.provideFunction("millis-to-refresh", ls -> {
+			setMillisToRefresh(((Number) ls.get(0)).intValue());
+			return null;
+		});
+		liceEnv.provideFunction("title", ls -> {
+			setTitle(ls.get(0).toString());
+			return null;
+		});
+		liceEnv.provideFunction("life", ls -> {
+			if (!ls.isEmpty()) life = ((Number) ls.get(0)).intValue();
+			return life;
+		});
+		liceEnv.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
+		liceEnv.defineFunction("run-later", ((metaData, nodes) -> {
+			Number time = (Number) nodes.get(0).eval();
+			if (time != null) runLater(time.longValue(), () -> {
+				for (int i = 0; i < nodes.size(); i++) {
+					if (i != 0) nodes.get(i).eval();
+				}
+			});
+			return new ValueNode(null, metaData);
+		}));
+		liceEnv.provideFunction("create-object", ls -> {
+			BloodedObject ret = enemy(((Integer) ls.get(0)));
+			enemies.add(ret);
+			addObject(ret);
+			return ret;
+		});
+		liceEnv.provideFunction("approach-player", ls -> {
+			BloodedObject ret = (BloodedObject) ls.get(0);
+			Number proportion = (Number) ls.get(1);
+			ret.addAnim(new ApproachingMove(ret, playerItself, proportion.doubleValue()));
+			return ret;
+		});
+		liceEnv.provideFunction("move", ls -> {
+			BloodedObject ret = (BloodedObject) ls.get(0);
+			Number x = (Number) ls.get(1);
+			Number y = (Number) ls.get(2);
+			ret.addAnim(new AccurateMove(x.doubleValue(), y.doubleValue()));
+			return ret;
+		});
+		liceEnv.provideFunction("stop-anims", ls -> {
+			ls.forEach(o -> ((FObject) o).stopAnims());
+			return null;
+		});
+
 		addKeyListener(null, event -> {
 			dealWithShift(event.isShiftDown());
 			if (event.getKeyCode() >= KeyEvent.VK_LEFT && event.getKeyCode() <= KeyEvent.VK_DOWN)
@@ -189,7 +197,7 @@ public class Touhou extends Game {
 				if (speed == fastSpeed && angle > PI / 2) angle -= 0.1;
 			}
 			if (direction.get(KeyEvent.VK_RIGHT - KeyEvent.VK_LEFT)) {
-				if (playerItself.getX() - playerItself.getWidth() < sceneWidth) player.move(speed, 0);
+				if (playerItself.getX() - playerItself.getWidth() < stageWidth) player.move(speed, 0);
 				if (speed == fastSpeed && angle < PI + PI / 2) angle += 0.1;
 			}
 			if (direction.get(KeyEvent.VK_UP - KeyEvent.VK_LEFT) && playerItself.getY() > 10) player.move(0, -speed);
@@ -277,7 +285,7 @@ public class Touhou extends Game {
 		final int num = (int) (Math.random() * 4);
 		return new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
 				.mapToObj(x -> enemyBigImage.part(x * size, size * (8 + num), size, size))
-				.collect(Collectors.toList()), 50), Math.random() * (sceneWidth - 2) + 2, 0, blood);
+				.collect(Collectors.toList()), 50), Math.random() * (stageWidth - 2) + 2, 0, blood);
 	}
 
 	@NotNull
@@ -304,7 +312,7 @@ public class Touhou extends Game {
 				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)),
 				new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())),
 				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
-		double x = sceneWidth + playerItself.getWidth() * 2;
+		double x = stageWidth + playerItself.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
 		lifeText = new SimpleText(ColorResource.WHITE, "", x + 20, 120);
 		if (Platforms.isOnWindows()) {

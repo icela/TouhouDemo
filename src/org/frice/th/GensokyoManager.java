@@ -50,7 +50,7 @@ public interface GensokyoManager {
 			this.game = game;
 			player = new ImageObject(new FrameImageResource(IntStream.range(0, 8)
 					.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48))
-					.collect(Collectors.toList()), 50), (Touhou.sceneWidth >>> 1) - 1, game.getHeight() - 50);
+					.collect(Collectors.toList()), 50), (Touhou.stageWidth >>> 1) - 1, game.getHeight() - 50);
 		}
 
 		@Override
@@ -91,7 +91,7 @@ public interface GensokyoManager {
 			this.game = game;
 			player = new ImageObject(new FrameImageResource(IntStream.range(0, 8)
 					.mapToObj(x -> bigImage.part(x * 32, 0, 32, 48))
-					.collect(Collectors.toList()), 50), (Touhou.sceneWidth >>> 1) - 1, game.getHeight() - 50);
+					.collect(Collectors.toList()), 50), (Touhou.stageWidth >>> 1) - 1, game.getHeight() - 50);
 		}
 
 		@Override
