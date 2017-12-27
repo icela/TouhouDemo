@@ -156,7 +156,7 @@ public class Touhou extends Game {
 		playerPoint2.addAnim(new SimpleRotate(-2));
 		playerPoint2.setVisible(false);
 		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
-		playerItself.setCollisionBox(playerItself.smallerBox(28, 15, 13, 13));
+		playerItself.setCollisionBox(playerItself.smallerBox(22, 22, 13, 13));
 		bgmPlayer = AudioManager.getPlayer(sourceRoot + "/bgm.mp3");
 		enemyBigImage = ImageResource.fromPath(sourceRoot + "/th11/enemy/enemy.png");
 	}
@@ -286,7 +286,7 @@ public class Touhou extends Game {
 		ImageResource image = ImageResource.fromPath(sourceRoot + "/th11/bullet/etama2.png").part(0, 16, 64, 64);
 		return new ImageObject(image,
 				playerItself.getX() + (playerItself.getWidth() - image.getImage().getWidth()) / 2,
-				getHeight() - 50);
+				playerItself.getY() + (playerItself.getHeight() - image.getImage().getHeight()) / 2);
 	}
 
 	private List<ImageObject> bullet() {
