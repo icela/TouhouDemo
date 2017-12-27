@@ -7,6 +7,7 @@ import org.frice.resource.image.ImageResource;
 import org.frice.util.media.AudioManager;
 import org.frice.util.message.FLog;
 import org.frice.util.shape.FRectangle;
+import org.frice.util.time.FClock;
 import org.frice.util.time.FTimer;
 import org.jetbrains.annotations.NotNull;
 import org.lice.Lice;
