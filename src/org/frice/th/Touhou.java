@@ -7,7 +7,6 @@ import org.frice.resource.image.ImageResource;
 import org.frice.util.media.AudioManager;
 import org.frice.util.message.FLog;
 import org.frice.util.shape.FRectangle;
-import org.frice.util.time.FClock;
 import org.frice.util.time.FTimer;
 import org.jetbrains.annotations.NotNull;
 import org.lice.Lice;
@@ -22,7 +21,7 @@ public class Touhou extends Game {
 	private FTimer checkTimer = new FTimer(3);
 	private FTimer shootTimer = new FTimer(54);
 	private FTimer enemyShootTimer = new FTimer(200);
-	public static int stageWidth = 400;
+	public static int stageWidth = 600;
 	public static String sourceRoot;
 	private SymbolList liceEnv;
 	private Stage stage;

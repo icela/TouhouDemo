@@ -3,10 +3,10 @@
 ; (use-reimu-a)
 (use-marisa-a)
 
-(window-size 680 540)
-(stage-width 400)
+(window-size 1080 640)
+(stage-width 800)
 
-(millis-to-refresh 12)
+(millis-to-refresh 0)
 (title "Touhou game by ice1000")
 
 (life 8)

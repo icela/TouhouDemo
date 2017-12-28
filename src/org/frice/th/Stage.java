@@ -35,14 +35,14 @@ import static org.frice.th.Touhou.stageWidth;
 public class Stage {
 	private @NotNull Touhou game;
 	private @NotNull ImageObject playerPoint, playerPoint2;
-	private static final int fastSpeed = 8;
+	private static final int fastSpeed = 6;
 	private @NotNull BitSet direction = new BitSet(6);
 	private int speed = fastSpeed;
 	private int score = 0;
 	private int life;
 	private int backgroundSpeed = 2;
-	private static final int backgroundPicCountX = 3;
-	private static final int backgroundPicCountY = 3;
+	private static final int backgroundPicCountX = 5;
+	private static final int backgroundPicCountY = 4;
 	private @NotNull AttachedObjects player;
 	private @NotNull ImageObject playerItself;
 	private @NotNull GensokyoManager gensokyoManager;
@@ -69,12 +69,12 @@ public class Stage {
 			return life;
 		});
 		liceEnv.provideFunction("assets-root", ls -> sourceRoot = ls.get(0).toString());
-		liceEnv.defineFunction("run-later", (metaData, nodes) -> {
+		liceEnv.defineFunction("run-later", (meta, nodes) -> {
 			Number time = (Number) nodes.get(0).eval();
 			if (time != null) game.runLater(time.longValue(), () -> {
 				for (int i = 1; i < nodes.size(); i++) nodes.get(i).eval();
 			});
-			return new ValueNode(null, metaData);
+			return new ValueNode(null, meta);
 		});
 		liceEnv.provideFunction("create-object", ls -> {
 			BloodedObject ret = enemy(((Integer) ls.get(0)));
@@ -129,13 +129,12 @@ public class Stage {
 		ret.addAnim(new AccurateMove(0, 300 * (e.getY() > playerItself.getY() ? -1 : 1)));
 		ret.addAnim(new DirectedMove(ret, playerItself.getX(), playerItself.getY(), 50));
 		enemyBullets.add(ret);
-		ret.setCollisionBox(ret.smallerBox(2));
+		ret.setCollisionBox(ret.smallerBox(ret.getWidth() / 3));
 		return ret;
 	}
 
-	@NotNull
 	@Contract(pure = true)
-	private ImageObject playerHitbox() {
+	private @NotNull ImageObject playerHitbox() {
 		ImageResource image = game.createHitbox();
 		return new ImageObject(image,
 				playerItself.getX() + (playerItself.getWidth() - image.getImage().getWidth()) / 2,
@@ -160,8 +159,7 @@ public class Stage {
 		if (event.getKeyCode() == KeyEvent.VK_CONTROL) backgroundImages.forEach(o -> o.setRes(darkBackground));
 	}
 
-	@NotNull
-	private BloodedObject enemy(int blood) {
+	private @NotNull BloodedObject enemy(int blood) {
 		final int size = 32;
 		final int num = (int) (Math.random() * 4);
 		return new BloodedObject(new FrameImageResource(IntStream.of(0, 1, 2, 3, 2, 1)
