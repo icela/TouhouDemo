@@ -1,16 +1,15 @@
 package org.frice.th;
 
 import org.frice.Game;
-import org.frice.obj.sub.ShapeObject;
-import org.frice.resource.graphics.ColorResource;
 import org.frice.resource.image.ImageResource;
 import org.frice.util.media.AudioManager;
 import org.frice.util.message.FLog;
-import org.frice.util.shape.FRectangle;
 import org.frice.util.time.FTimer;
 import org.jetbrains.annotations.NotNull;
 import org.lice.Lice;
 import org.lice.core.SymbolList;
+import org.lice.model.MetaData;
+import org.lice.model.ValueNode;
 
 import java.io.File;
 
@@ -30,7 +29,7 @@ public class Touhou extends Game {
 
 	public Touhou() {
 		// super(640, 480, 2);
-		super(3);
+		super(5);
 	}
 
 	@Override
@@ -50,7 +49,7 @@ public class Touhou extends Game {
 			return null;
 		});
 		liceEnv.provideFunction("stage-width", ls -> stageWidth = ((Number) ls.get(0)).intValue());
-		liceEnv.provideFunction("millis-to-refresh", ls -> {
+		liceEnv.provideFunction("millis->refresh", ls -> {
 			setMillisToRefresh(((Number) ls.get(0)).intValue());
 			return null;
 		});
@@ -58,6 +57,7 @@ public class Touhou extends Game {
 			setTitle(ls.get(0).toString());
 			return null;
 		});
+		liceEnv.defineVariable("simple", new ValueNode(null, new MetaData()));
 		addKeyListener(null, stage::onPress, stage::onRelease);
 		Lice.run(new File("./lice/init.lice"), liceEnv);
 	}
@@ -82,18 +82,12 @@ public class Touhou extends Game {
 
 	@Override
 	public void onLastInit() {
-		addObject(0, new ShapeObject(ColorResource.BLACK, new FRectangle(getWidth(), getHeight()), 0, 0));
 		stage.start();
-		stage.background();
-		addObject(2,
-				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), 10)),
-				new ShapeObject(ColorResource.八云紫, new FRectangle(10, getHeight())),
-				new ShapeObject(ColorResource.八云紫, new FRectangle(getWidth(), getHeight()), 0, getHeight() - 10));
 		Lice.run(new File("./lice/damuku.lice"), liceEnv);
 	}
 
 
-	public static void main(String[] args) {
+	public static void main(@NotNull String... args) {
 		launch(Touhou.class);
 	}
 }

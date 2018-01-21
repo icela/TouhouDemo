@@ -6,8 +6,8 @@ apply plugin: 'application'
 
 buildscript {
 	ext.kotlin_version = '1.2.10'
-	ext.frice_version = '1.8.2'
-	ext.lice_version = '1.2.2'
+	ext.frice_version = '1.8.3'
+	ext.lice_version = '3.3.2'
 	repositories { mavenCentral() }
 }
 
@@ -42,7 +42,7 @@ dependencies {
 		library "com.github.icela:FriceEngine:v$frice_version"
 	}
 
-	library "com.github.lice-lang:lice-tiny:v$lice_version"
+	library "com.github.lice-lang:lice:v$lice_version"
 
 	configurations.compile.extendsFrom(configurations.library)
 

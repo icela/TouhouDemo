@@ -1,3 +1,4 @@
+;; run 500ms later
 (run-later 500
   (-> enemy1 (create-object 200))
   (move enemy1 0 200))
@@ -25,3 +26,4 @@
   (create-object 1500)
   (create-object 1500)
   (create-object 1500))
+

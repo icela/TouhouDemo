@@ -252,19 +252,19 @@ public class Stage {
 		for (int x = 0; x < backgroundPicCountX; x++)
 			for (int y = 0; y < backgroundPicCountY; y++) {
 				ImageObject object = new ImageObject(darkBackground,
-						x * darkBackground.getImage().getWidth(),
-						y * darkBackground.getImage().getHeight());
+						x * darkBackground.getImage().getWidth() - x,
+						y * darkBackground.getImage().getHeight() - y);
 				object.addAnim(new CustomMove() {
 					@Override
 					public double getXDelta(double v) {
 						return (-v / (backgroundSpeed << 2)) +
-								((object.getX() < -object.getWidth()) ? (object.getWidth() * backgroundPicCountX) : 0);
+								((object.getX() < -object.getWidth()) ? ((object.getWidth() - 1) * backgroundPicCountX) : 0);
 					}
 
 					@Override
 					public double getYDelta(double v) {
 						return (v / backgroundSpeed) -
-								((object.getY() > game.getHeight()) ? (object.getHeight() * backgroundPicCountY) : 0);
+								((object.getY() > game.getHeight()) ? ((object.getHeight() - 1) * backgroundPicCountY) : 0);
 					}
 				});
 				game.addObject(0, object);
@@ -273,6 +273,15 @@ public class Stage {
 	}
 
 	public void start() {
+		background();
+		game.addObject(4,
+				new ShapeObject(ColorResource.八云紫, new FRectangle(game.getWidth(), 10)),
+				new ShapeObject(ColorResource.八云紫, new FRectangle(10, game.getHeight())),
+				new ShapeObject(ColorResource.八云紫,
+						new FRectangle(game.getWidth(), game.getHeight()),
+						0,
+						game.getHeight() - 10));
+
 		playerItself = gensokyoManager.player();
 		playerPoint = playerHitbox();
 		playerPoint.addAnim(new SimpleRotate(2));
@@ -282,7 +291,7 @@ public class Stage {
 		playerPoint2.setVisible(false);
 		player = new AttachedObjects(Arrays.asList(playerItself, playerPoint, playerPoint2));
 		playerItself.setCollisionBox(playerItself.smallerBox(22, 22, 13, 13));
-		game.addObject(1, playerItself, playerPoint, playerPoint2);
+		game.addObject(3, playerItself, playerPoint, playerPoint2);
 
 		double x = stageWidth + playerItself.getWidth() * 2;
 		scoreText = new SimpleText(ColorResource.WHITE, "", x + 20, 100);
