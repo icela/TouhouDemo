@@ -12,6 +12,7 @@ import org.lice.model.MetaData;
 import org.lice.model.ValueNode;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static org.frice.Initializer.launch;
 
@@ -59,7 +60,7 @@ public class Touhou extends Game {
 		});
 		liceEnv.defineVariable("simple", new ValueNode(null, new MetaData()));
 		addKeyListener(null, stage::onPress, stage::onRelease);
-		Lice.run(new File("./lice/init.lice"), liceEnv);
+		Lice.run(Paths.get("./lice/init.lice"), liceEnv);
 	}
 
 
