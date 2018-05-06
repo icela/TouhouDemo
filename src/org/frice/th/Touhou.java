@@ -11,7 +11,6 @@ import org.lice.core.SymbolList;
 import org.lice.model.MetaData;
 import org.lice.model.ValueNode;
 
-import java.io.File;
 import java.nio.file.Paths;
 
 import static org.frice.Initializer.launch;
@@ -25,8 +24,10 @@ public class Touhou extends Game {
 	public static String sourceRoot;
 	private SymbolList liceEnv;
 	private Stage stage;
-	private ImageResource hitbox = ImageResource.fromPath(Touhou.sourceRoot + "/th11/bullet/etama2.png")
-			.part(0, 16, 64, 64);
+	private ImageResource hitbox = ImageResource.fromPath(Touhou.sourceRoot + "/th11/bullet/etama2.png").part(0,
+			16,
+			64,
+			64);
 
 	public Touhou() {
 		// super(640, 480, 2);
@@ -84,9 +85,8 @@ public class Touhou extends Game {
 	@Override
 	public void onLastInit() {
 		stage.start();
-		Lice.run(new File("./lice/damuku.lice"), liceEnv);
+		Lice.run(Paths.get("lice", "damuku.lice"), liceEnv);
 	}
-
 
 	public static void main(@NotNull String... args) {
 		launch(Touhou.class);

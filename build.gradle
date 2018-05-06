@@ -5,7 +5,7 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 buildscript {
-	ext.kotlin_version = '1.2.10'
+	ext.kotlin_version = '1.2.41'
 	ext.frice_version = '1.8.3'
 	ext.lice_version = '3.3.2'
 	repositories { mavenCentral() }
@@ -21,31 +21,33 @@ repositories {
 }
 
 sourceSets {
-	main.java.srcDirs += 'src'
-	test.java.srcDirs += 'test'
-	main.resources.srcDirs += 'res'
+	main.java.srcDirs = ['src']
+	test.java.srcDirs = ['test']
+	main.resources.srcDirs = ['res']
 }
-
-allprojects { repositories { maven { url 'https://jitpack.io' } } }
-
-tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 configurations { library }
 
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+	options.setDeprecation true
+}
+
+repositories {
+	jcenter()
+	maven { url 'https://dl.bintray.com/ice1000/Lice' }
+}
+
 dependencies {
-	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+	compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 	compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
 
-	if (useLocalFriceEngine) {
-		library name: "engine-$frice_version"
-	} else {
-		library "com.github.icela:FriceEngine:v$frice_version"
-	}
+	if (useLocalFriceEngine) library name: "engine-$frice_version"
+	else library "org.frice:engine:$frice_version"
 
-	library "com.github.lice-lang:lice:v$lice_version"
+	library "org.lice:lice:$lice_version"
 
 	configurations.compile.extendsFrom(configurations.library)
-
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
