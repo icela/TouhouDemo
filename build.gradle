@@ -5,8 +5,8 @@ apply plugin: 'java'
 apply plugin: 'application'
 
 buildscript {
-	ext.kotlin_version = '1.2.41'
-	ext.frice_version = '1.8.3'
+	ext.kotlin_version = '1.2.60'
+	ext.frice_version = '1.8.5'
 	ext.lice_version = '3.3.2'
 	repositories { mavenCentral() }
 }
@@ -47,7 +47,7 @@ dependencies {
 
 	library "org.lice:lice:$lice_version"
 
-	configurations.compile.extendsFrom(configurations.library)
+	configurations.compile.extendsFrom configurations.library
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 

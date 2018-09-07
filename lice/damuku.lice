@@ -27,3 +27,9 @@
   (create-object 1500)
   (create-object 1500))
 
+(run-later 3000
+  (-> obj1 (create-object 9999999))
+  (move obj1 0 100))
+
+(run-later 8000
+  (move obj1 0 -200))
