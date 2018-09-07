@@ -26,28 +26,20 @@ sourceSets {
 	main.resources.srcDirs = ['res']
 }
 
-configurations { library }
-
 tasks.withType(JavaCompile) {
 	options.encoding = 'UTF-8'
 	options.setDeprecation true
 }
 
-repositories {
-	jcenter()
-	maven { url 'https://dl.bintray.com/ice1000/Lice' }
-}
+repositories { jcenter() }
 
 dependencies {
 	compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-	compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+	compile group: 'org.jetbrains', name: 'annotations', version: '16.0.1'
 
-	if (useLocalFriceEngine) library name: "engine-$frice_version"
-	else library "org.frice:engine:$frice_version"
-
-	library "org.lice:lice:$lice_version"
-
-	configurations.compile.extendsFrom configurations.library
+	if (useLocalFriceEngine) compile name: "engine-$frice_version"
+	else compile "org.frice:engine:$frice_version"
+	compile "org.lice:lice:$lice_version"
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -61,7 +53,7 @@ task fatJar(type: Jar) {
 	description 'Assembles a jar archive containing the main classes and all the dependencies.'
 	group 'build'
 	manifest { attributes 'Main-Class': mainClassName }
-	from { configurations.library.collect { it.isDirectory() ? it : zipTree(it) } }
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	with jar
 }
 
